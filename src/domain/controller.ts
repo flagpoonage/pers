@@ -28,6 +28,7 @@ import { createUuid } from './programs/uuid';
 import { epoch } from './programs/epoch';
 import { prettyJson } from './programs/pretty-json';
 import { dateFmt } from './programs/date-fmt';
+import { clear } from './programs/clear';
 
 export interface PersController {
   currentUser: SelfUser;
@@ -110,18 +111,24 @@ export function setSystemUserProperties(
   triggerUsersChange(controller);
 }
 
-export function createRootConversation(): PersConversation {
+export function createRootConversation(
+  includeIntro: boolean
+): PersConversation {
   const conversation = createConversation([SystemUser]);
   // setConversationType(conversation, 'command');
-  insertMessageInConversation(
-    conversation,
-    createMessage('system', getSystemIntroductionText())
-  );
+
+  if (includeIntro) {
+    insertMessageInConversation(
+      conversation,
+      createMessage('system', getSystemIntroductionText())
+    );
+  }
+
   return conversation;
 }
 
 export function createController(): PersController {
-  const rootConversation = createRootConversation();
+  const rootConversation = createRootConversation(true);
 
   return {
     currentUser: createSelfUser(),
@@ -143,6 +150,7 @@ export function createController(): PersController {
       'pretty-json': prettyJson,
       epoch: epoch,
       'date-fmt': dateFmt,
+      clear: clear,
     },
   };
 }

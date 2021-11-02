@@ -359,3 +359,11 @@ export function addEarliestMessageGroupToConversation(
   conversation.messageGroups.unshift(messageGroup);
   return conversation;
 }
+
+export function clearConversation(
+  conversation: PersConversation
+): PersConversation {
+  conversation.messageGroups = [];
+  triggerChange(conversation);
+  return conversation;
+}
