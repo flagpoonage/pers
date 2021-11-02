@@ -20,7 +20,7 @@ export async function* setCmdColor(
   setCommandColor(controller, color);
 
   return {
-    message: `System display colour is set to ${color}`,
+    message: `Command colour is set to ${color}`,
     isValidYield: true,
   };
 }
