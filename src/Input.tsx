@@ -2,19 +2,19 @@ import React, { useCallback, useRef, useState } from 'react';
 import {
   useCommandColor,
   useCommandEntryOptions,
+  useController,
   useCurrentConversation,
   useSelf,
 } from './ControllerContext';
-import { createMessage } from './domain/message';
 
 export function Input() {
+  const self = useSelf();
+  const { controller } = useController();
   const commandColor = useCommandColor();
   const entryOptions = useCommandEntryOptions();
   const { conversation, sendMessage } = useCurrentConversation();
   const [text, setText] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
-  // const [isMasked] = useState(false);
-  const self = useSelf();
 
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -32,7 +32,9 @@ export function Input() {
   }, []);
 
   const isCommand =
-    conversation.type === 'command' || text.indexOf('\\c ') === 0;
+    conversation.type === 'command' ||
+    text.indexOf('\\c ') === 0 ||
+    !!controller.commandExecution;
 
   return (
     <div className="w bg-clr-dark-d2 row flex no-grow no-shrink">

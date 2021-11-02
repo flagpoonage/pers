@@ -175,7 +175,11 @@ export function getConversationMessageGroupAtTime(
   conversation: PersConversation,
   time: Date
 ): GetMessageGroupAtTimeResult {
-  if (time > getConversationsLatestMessageTime(conversation)) {
+  const latestConversationMessageTime =
+    getConversationsLatestMessageTime(conversation);
+  // The time can be equal if responses to commands are generated within the same
+  // millisecond that the command itself was sent, which is possible ant not infrequent.
+  if (time.getTime() >= latestConversationMessageTime.getTime()) {
     return { state: LaterThanAll, value: null };
   }
 
@@ -187,8 +191,10 @@ export function getConversationMessageGroupAtTime(
 
     const latestGroupMessageTime = getGroupsLatestMessageTime(messageGroup);
 
-    if (time > latestGroupMessageTime) {
-      return { state: MissingGroup, value: [i - 1, i] };
+    if (time.getTime() > latestGroupMessageTime.getTime()) {
+      return i === 0
+        ? { state: LaterThanAll, value: null }
+        : { state: MissingGroup, value: [i - 1, i] };
     }
 
     const earliestGroupMessageTime = getGroupsEarliestMessageTime(messageGroup);

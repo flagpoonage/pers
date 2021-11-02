@@ -112,7 +112,7 @@ export function setSystemUserProperties(
 
 export function createRootConversation(): PersConversation {
   const conversation = createConversation([SystemUser]);
-  setConversationType(conversation, 'command');
+  // setConversationType(conversation, 'command');
   insertMessageInConversation(
     conversation,
     createMessage('system', getSystemIntroductionText())
@@ -188,11 +188,14 @@ export async function sendMessageToController(
     throw new Error('Unable to send message, cannot find conversation');
   }
 
+  const isCommandMode =
+    conversation.type === 'command' || !!controller.commandExecution;
   const isCommandMessage = message.indexOf('\\c ') === 0;
 
-  const command = isCommandMessage ? message.split('\\c ')[1] : message;
+  const command =
+    !isCommandMode && isCommandMessage ? message.split('\\c ')[1] : message;
 
-  if (isCommandMessage || conversation.type === 'command') {
+  if (isCommandMessage || isCommandMode) {
     controller.commandEntryOptions.mask;
 
     const displayValue = controller.commandEntryOptions.mask

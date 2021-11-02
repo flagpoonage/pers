@@ -1044,7 +1044,7 @@
             }
             return dispatcher.useContext(Context, unstable_observedBits);
           }
-          function useState3(initialState) {
+          function useState4(initialState) {
             var dispatcher = resolveDispatcher();
             return dispatcher.useState(initialState);
           }
@@ -1052,15 +1052,15 @@
             var dispatcher = resolveDispatcher();
             return dispatcher.useReducer(reducer, initialArg, init);
           }
-          function useRef3(initialValue) {
+          function useRef4(initialValue) {
             var dispatcher = resolveDispatcher();
             return dispatcher.useRef(initialValue);
           }
-          function useEffect2(create, deps) {
+          function useEffect3(create, deps) {
             var dispatcher = resolveDispatcher();
             return dispatcher.useEffect(create, deps);
           }
-          function useLayoutEffect(create, deps) {
+          function useLayoutEffect2(create, deps) {
             var dispatcher = resolveDispatcher();
             return dispatcher.useLayoutEffect(create, deps);
           }
@@ -1626,13 +1626,13 @@
           exports.useCallback = useCallback3;
           exports.useContext = useContext2;
           exports.useDebugValue = useDebugValue;
-          exports.useEffect = useEffect2;
+          exports.useEffect = useEffect3;
           exports.useImperativeHandle = useImperativeHandle;
-          exports.useLayoutEffect = useLayoutEffect;
+          exports.useLayoutEffect = useLayoutEffect2;
           exports.useMemo = useMemo;
           exports.useReducer = useReducer;
-          exports.useRef = useRef3;
-          exports.useState = useState3;
+          exports.useRef = useRef4;
+          exports.useState = useState4;
           exports.version = ReactVersion;
         })();
       }
@@ -22103,9 +22103,6 @@ For more info, visit https://reactjs.org/link/mock-scheduler`);
       emitter: createEmitter()
     };
   }
-  function setConversationType(conversation, type) {
-    conversation.type = type;
-  }
   function addConversationChangeListener(conversation, listener) {
     addHandler(conversation.emitter, "change", listener);
   }
@@ -22134,7 +22131,8 @@ For more info, visit https://reactjs.org/link/mock-scheduler`);
     return !!group;
   }
   function getConversationMessageGroupAtTime(conversation, time) {
-    if (time > getConversationsLatestMessageTime(conversation)) {
+    const latestConversationMessageTime = getConversationsLatestMessageTime(conversation);
+    if (time.getTime() >= latestConversationMessageTime.getTime()) {
       return { state: LaterThanAll, value: null };
     }
     for (let i = 0; i < conversation.messageGroups.length; i++) {
@@ -22143,8 +22141,8 @@ For more info, visit https://reactjs.org/link/mock-scheduler`);
         continue;
       }
       const latestGroupMessageTime = getGroupsLatestMessageTime(messageGroup);
-      if (time > latestGroupMessageTime) {
-        return { state: MissingGroup, value: [i - 1, i] };
+      if (time.getTime() > latestGroupMessageTime.getTime()) {
+        return i === 0 ? { state: LaterThanAll, value: null } : { state: MissingGroup, value: [i - 1, i] };
       }
       const earliestGroupMessageTime = getGroupsEarliestMessageTime(messageGroup);
       if (earliestGroupMessageTime > time) {
@@ -22517,7 +22515,7 @@ Here is a list of commands that you may find useful. If you are in a chat with a
     }
     const message = `Generated ${count} UUIDs:
 
-${uuids.map((a) => `* ${a}`).join("\n")}`;
+${uuids.join("\n")}`;
     return {
       message,
       isValidYield: true
@@ -22603,7 +22601,6 @@ ${uuids.map((a) => `* ${a}`).join("\n")}`;
   }
   function createRootConversation() {
     const conversation = createConversation([SystemUser]);
-    setConversationType(conversation, "command");
     insertMessageInConversation(conversation, createMessage("system", getSystemIntroductionText()));
     return conversation;
   }
@@ -22648,9 +22645,10 @@ ${uuids.map((a) => `* ${a}`).join("\n")}`;
     if (!conversation) {
       throw new Error("Unable to send message, cannot find conversation");
     }
+    const isCommandMode = conversation.type === "command" || !!controller.commandExecution;
     const isCommandMessage = message.indexOf("\\c ") === 0;
-    const command = isCommandMessage ? message.split("\\c ")[1] : message;
-    if (isCommandMessage || conversation.type === "command") {
+    const command = !isCommandMode && isCommandMessage ? message.split("\\c ")[1] : message;
+    if (isCommandMessage || isCommandMode) {
       controller.commandEntryOptions.mask;
       const displayValue = controller.commandEntryOptions.mask ? command.replaceAll(/./g, "*") : command;
       insertMessageInConversation(conversation, createMessage(SystemUser.userId, displayValue, true));
@@ -22836,6 +22834,25 @@ ${uuids.map((a) => `* ${a}`).join("\n")}`;
     const commandColor = useCommandColor();
     const users = useAvailableUsers();
     const self = useSelf();
+    const containerRef = (0, import_react2.useRef)(null);
+    const contentRef = (0, import_react2.useRef)(null);
+    const [contentFitsInScreen, setContentFitsInScreen] = (0, import_react2.useState)(true);
+    (0, import_react2.useLayoutEffect)(() => {
+      if (containerRef.current && contentRef.current && containerRef.current.clientHeight < contentRef.current.scrollHeight) {
+        if (contentFitsInScreen) {
+          setContentFitsInScreen(false);
+        }
+      } else {
+        setContentFitsInScreen(true);
+      }
+    }, [contentFitsInScreen, messageGroups]);
+    (0, import_react2.useEffect)(() => {
+      if (containerRef.current && !contentFitsInScreen) {
+        containerRef.current.classList.remove("justify-end");
+        containerRef.current.scrollTo({ top: 1e4 });
+      }
+    }, [contentFitsInScreen, messageGroups]);
+    const containerClass = `flex abs pad-x scroll-y h w col ${contentFitsInScreen ? "justify-end" : ""}`;
     return /* @__PURE__ */ import_react2.default.createElement("div", {
       className: "shrink grow h w rel lh"
     }, /* @__PURE__ */ import_react2.default.createElement("style", {
@@ -22845,7 +22862,10 @@ ${uuids.map((a) => `* ${a}`).join("\n")}`;
         }`), /* @__PURE__ */ import_react2.default.createElement("div", {
       className: "bg-clr-dark-d1 w-16 abs h"
     }), /* @__PURE__ */ import_react2.default.createElement("div", {
-      className: "flex abs shrink grow scroll-y h w col pad justify-end"
+      ref: containerRef,
+      className: containerClass
+    }, /* @__PURE__ */ import_react2.default.createElement("div", {
+      ref: contentRef
     }, messageGroups.map((group) => {
       const user = group.userId === self.userId ? self : users.get(group.userId);
       return /* @__PURE__ */ import_react2.default.createElement("div", {
@@ -22866,18 +22886,19 @@ ${uuids.map((a) => `* ${a}`).join("\n")}`;
           color: message.isCommand ? commandColor : "inherit"
         }
       }, message.message))));
-    })));
+    }))));
   }
 
   // src/Input.tsx
   var import_react3 = __toModule(require_react());
   function Input() {
+    const self = useSelf();
+    const { controller } = useController();
     const commandColor = useCommandColor();
     const entryOptions = useCommandEntryOptions();
     const { conversation, sendMessage } = useCurrentConversation();
     const [text, setText] = (0, import_react3.useState)("");
     const inputRef = (0, import_react3.useRef)(null);
-    const self = useSelf();
     const handleKeyDown = (0, import_react3.useCallback)((e) => {
       if (!e.shiftKey && e.key === "Enter" && inputRef.current) {
         sendMessage(inputRef.current.value);
@@ -22888,7 +22909,7 @@ ${uuids.map((a) => `* ${a}`).join("\n")}`;
       const value = e.currentTarget.value;
       setText(value);
     }, []);
-    const isCommand = conversation.type === "command" || text.indexOf("\\c ") === 0;
+    const isCommand = conversation.type === "command" || text.indexOf("\\c ") === 0 || !!controller.commandExecution;
     return /* @__PURE__ */ import_react3.default.createElement("div", {
       className: "w bg-clr-dark-d2 row flex no-grow no-shrink"
     }, /* @__PURE__ */ import_react3.default.createElement("div", {

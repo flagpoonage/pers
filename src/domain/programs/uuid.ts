@@ -32,9 +32,7 @@ export async function* createUuid(): TalkProgramGenerator {
     uuids.push(uuid());
   }
 
-  const message = `Generated ${count} UUIDs:\n\n${uuids
-    .map((a) => `* ${a}`)
-    .join('\n')}`;
+  const message = `Generated ${count} UUIDs:\n\n${uuids.join('\n')}`;
 
   return {
     message,
