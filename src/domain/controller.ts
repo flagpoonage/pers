@@ -2,7 +2,6 @@ import {
   createConversation,
   insertMessageInConversation,
   PersConversation,
-  setConversationType,
 } from './conversation';
 import {
   addHandler,
