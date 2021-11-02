@@ -39,6 +39,7 @@ export interface PersController {
   programs: Record<string, TalkProgram | TalkCommand>;
   commandExecution: TalkProgramGenerator | null;
   commandEntryOptions: CommandEntryOptions;
+  history: string[];
 }
 
 export function createSelfUser(): SelfUser {
@@ -133,6 +134,7 @@ export function createController(): PersController {
     commandExecution: null,
     emitter: createEmitter(),
     commandEntryOptions: createDefaultCommandEntryOptions(),
+    history: [],
     programs: {
       uuid: createUuid,
       'set-color': setColor,
@@ -193,6 +195,8 @@ export async function sendMessageToController(
 
   const command =
     !isCommandMode && isCommandMessage ? message.split('\\c ')[1] : message;
+
+  controller.history.push(message);
 
   if (isCommandMessage || isCommandMode) {
     controller.commandEntryOptions.mask;

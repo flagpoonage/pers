@@ -15,15 +15,51 @@ export function Input() {
   const { conversation, sendMessage } = useCurrentConversation();
   const [text, setText] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
+  const [historyIndex, setHistoryIndex] = useState<number | null>(null);
 
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent<HTMLInputElement>) => {
       if (!e.shiftKey && e.key === 'Enter' && inputRef.current) {
         sendMessage(inputRef.current.value);
         setText('');
+        return;
       }
+
+      if (e.shiftKey && e.key === 'ArrowUp' && controller.history.length > 0) {
+        let newIndex = historyIndex ?? 0;
+
+        if (historyIndex === null) {
+          newIndex = controller.history.length - 1;
+        } else if (historyIndex > 0) {
+          newIndex = historyIndex - 1;
+        }
+
+        setHistoryIndex(newIndex);
+        setText(controller.history[newIndex]);
+
+        // Stop the cursor from moving to the start of the line
+        e.preventDefault();
+        e.stopPropagation();
+        return false;
+      }
+
+      if (e.shiftKey && e.key === 'ArrowDown' && historyIndex !== null) {
+        if (historyIndex === controller.history.length - 1) {
+          return;
+        }
+
+        setHistoryIndex(historyIndex + 1);
+        setText(controller.history[historyIndex + 1]);
+
+        // Stop the cursor from moving to the end of the line
+        e.preventDefault();
+        e.stopPropagation();
+        return false;
+      }
+
+      setHistoryIndex(null);
     },
-    [conversation, sendMessage]
+    [controller, conversation, sendMessage, historyIndex]
   );
 
   const handleChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
