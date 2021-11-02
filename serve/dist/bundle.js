@@ -22550,6 +22550,33 @@ ${uuids.join("\n")}`;
     };
   }
 
+  // src/domain/programs/pretty-json.ts
+  async function* prettyJson() {
+    const content = yield {
+      message: "Enter your JSON content",
+      isValidYield: true,
+      nextEntryOptions: {
+        mask: false,
+        label: "JSON Content"
+      }
+    };
+    try {
+      const result = JSON.parse(content);
+      const output = JSON.stringify(result, null, 2);
+      return {
+        message: `JSON Output:
+
+${output}`,
+        isValidYield: true
+      };
+    } catch (exception) {
+      return {
+        message: "Invalid JSON, could not be parsed",
+        isValidYield: true
+      };
+    }
+  }
+
   // src/domain/controller.ts
   function createSelfUser() {
     return {
@@ -22622,6 +22649,7 @@ ${uuids.join("\n")}`;
         "set-color": setColor,
         "set-sys-color": setSysColor,
         "set-cmd-color": setCmdColor,
+        "pretty-json": prettyJson,
         password: setPassword,
         yield: multiYield,
         epoch
@@ -22834,6 +22862,7 @@ ${uuids.join("\n")}`;
     const commandColor = useCommandColor();
     const users = useAvailableUsers();
     const self = useSelf();
+    const isMaximumScroll = (0, import_react2.useRef)(true);
     const containerRef = (0, import_react2.useRef)(null);
     const contentRef = (0, import_react2.useRef)(null);
     const [contentFitsInScreen, setContentFitsInScreen] = (0, import_react2.useState)(true);
@@ -22849,10 +22878,20 @@ ${uuids.join("\n")}`;
     (0, import_react2.useEffect)(() => {
       if (containerRef.current && !contentFitsInScreen) {
         containerRef.current.classList.remove("justify-end");
-        containerRef.current.scrollTo({ top: 1e4 });
+        isMaximumScroll.current && containerRef.current.scrollTo({ top: 1e4 });
       }
     }, [contentFitsInScreen, messageGroups]);
     const containerClass = `flex abs pad-x scroll-y h w col ${contentFitsInScreen ? "justify-end" : ""}`;
+    const handleScroll = () => {
+      if (!containerRef.current) {
+        return;
+      }
+      if (containerRef.current.clientHeight + containerRef.current.scrollTop >= containerRef.current.scrollHeight - 10) {
+        isMaximumScroll.current = true;
+      } else {
+        isMaximumScroll.current = false;
+      }
+    };
     return /* @__PURE__ */ import_react2.default.createElement("div", {
       className: "shrink grow h w rel lh"
     }, /* @__PURE__ */ import_react2.default.createElement("style", {
@@ -22863,7 +22902,8 @@ ${uuids.join("\n")}`;
       className: "bg-clr-dark-d1 w-16 abs h"
     }), /* @__PURE__ */ import_react2.default.createElement("div", {
       ref: containerRef,
-      className: containerClass
+      className: containerClass,
+      onScroll: handleScroll
     }, /* @__PURE__ */ import_react2.default.createElement("div", {
       ref: contentRef
     }, messageGroups.map((group) => {

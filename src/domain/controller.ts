@@ -29,6 +29,7 @@ import { setPassword } from './programs/password';
 import { createUuid } from './programs/uuid';
 import { multiYield } from './programs/multi-yeild';
 import { epoch } from './programs/epoch';
+import { prettyJson } from './programs/pretty-json';
 
 export interface PersController {
   currentUser: SelfUser;
@@ -139,6 +140,7 @@ export function createController(): PersController {
       'set-color': setColor,
       'set-sys-color': setSysColor,
       'set-cmd-color': setCmdColor,
+      'pretty-json': prettyJson,
       password: setPassword,
       yield: multiYield,
       epoch: epoch,

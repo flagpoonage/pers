@@ -13,6 +13,8 @@ export function Content() {
   const users = useAvailableUsers();
   const self = useSelf();
 
+  const isMaximumScroll = useRef(true);
+
   const containerRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
   const [contentFitsInScreen, setContentFitsInScreen] = useState(true);
@@ -36,13 +38,28 @@ export function Content() {
       // If the class hasn't yet been removed by React we need to remove
       // it manually so that we can trigger the scroll.
       containerRef.current.classList.remove('justify-end');
-      containerRef.current.scrollTo({ top: 10000 });
+      isMaximumScroll.current && containerRef.current.scrollTo({ top: 10000 });
     }
   }, [contentFitsInScreen, messageGroups]);
 
   const containerClass = `flex abs pad-x scroll-y h w col ${
     contentFitsInScreen ? 'justify-end' : ''
   }`;
+
+  const handleScroll = () => {
+    if (!containerRef.current) {
+      return;
+    }
+
+    if (
+      containerRef.current.clientHeight + containerRef.current.scrollTop >=
+      containerRef.current.scrollHeight - 10
+    ) {
+      isMaximumScroll.current = true;
+    } else {
+      isMaximumScroll.current = false;
+    }
+  };
 
   return (
     <div className="shrink grow h w rel lh">
@@ -52,7 +69,11 @@ export function Content() {
         }`}
       </style>
       <div className="bg-clr-dark-d1 w-16 abs h"></div>
-      <div ref={containerRef} className={containerClass}>
+      <div
+        ref={containerRef}
+        className={containerClass}
+        onScroll={handleScroll}
+      >
         <div ref={contentRef}>
           {messageGroups.map((group) => {
             const user =
