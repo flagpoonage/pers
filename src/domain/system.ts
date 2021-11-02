@@ -10,17 +10,17 @@ export function getSystemIntroductionText() {
   return `
 Welcome to Talk.
 
-Here is a list of commands that you may find useful. If you are in a chat with another user, these commands can be run by prepending the command with the command flag '\\c [command]'. 
+Here is a list of commands that you may find useful.
+If you are in a chat with another user, these commands can be run by prepending the command with the command flag '\\c [command]'. 
 
-* 'login [username] [password]' authenticates with the server
-* 'register [username] [password]' creates a new account on the server
-* 'logout' unauthenticate from the server and close any open chats 
-* 'set-name [name]' changes your display name. This does not change your username
-* 'set-color [hex color | web color name]' changes your display color. If another user has overwritten your display color on their side, this change will not affect them.
-* 'add-user [username] [?optional greeting]' adds a friend you can chat with. They must accept you as a friend before you can send them messages
-* 'acc-user [username]' accepts a friend who has added you.
-* 'chat [username]' opens your chat with the user.
-* 'root' returns you from any open chat to the root system chat.
-* 'notif' takes you to the notifications list 
+* 'clear' clears the current conversation on screen
+* 'intro' displays this text
+* 'epoch' generates a millisecond timestamp epoch
+* 'date-fmt [format]' displays the current date time in a given format (date-fns style)
+* 'pretty-json [json]' pretty prints a string of JSON
+* 'uuid [count]' generates the specified number of V4 UUID's
+* 'set-clr [color]' changes your display color. 
+* 'set-sys-clr [color]' changes the system display color. 
+* 'set-cmd-clr [color]' changes the command display color. 
   `.trimStart();
 }

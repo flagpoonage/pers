@@ -29,6 +29,7 @@ import { epoch } from './programs/epoch';
 import { prettyJson } from './programs/pretty-json';
 import { dateFmt } from './programs/date-fmt';
 import { clear } from './programs/clear';
+import { intro } from './programs/intro';
 
 export interface PersController {
   currentUser: SelfUser;
@@ -144,13 +145,14 @@ export function createController(): PersController {
     history: [],
     programs: {
       uuid: createUuid,
-      'set-color': setColor,
-      'set-sys-color': setSysColor,
-      'set-cmd-color': setCmdColor,
+      'set-clr': setColor,
+      'set-sys-clr': setSysColor,
+      'set-cmd-clr': setCmdColor,
       'pretty-json': prettyJson,
       epoch: epoch,
       'date-fmt': dateFmt,
       clear: clear,
+      intro: intro,
     },
   };
 }
