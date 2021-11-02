@@ -30,6 +30,7 @@ import { createUuid } from './programs/uuid';
 import { multiYield } from './programs/multi-yeild';
 import { epoch } from './programs/epoch';
 import { prettyJson } from './programs/pretty-json';
+import { dateFmt } from './programs/date-fmt';
 
 export interface PersController {
   currentUser: SelfUser;
@@ -144,6 +145,7 @@ export function createController(): PersController {
       password: setPassword,
       yield: multiYield,
       epoch: epoch,
+      'date-fmt': dateFmt,
     },
   };
 }
