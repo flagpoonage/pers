@@ -1,9 +1,7 @@
-import { PersController, setCommandColor } from '../controller';
-import { TalkProgramGenerator } from '../program';
-import { isValidColor } from './program-utils';
+import { ProgramOutput } from '../program';
 
-export async function* epoch(controller: PersController): TalkProgramGenerator {
-  yield {
+export async function epoch(): Promise<ProgramOutput> {
+  return {
     message: new Date().getTime().toString(),
     isValidYield: true,
   };

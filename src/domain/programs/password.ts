@@ -1,10 +1,6 @@
-import { PersController, setCommandColor } from '../controller';
 import { TalkProgramGenerator } from '../program';
-import { isValidColor } from './program-utils';
 
-export async function* setPassword(
-  controller: PersController
-): TalkProgramGenerator {
+export async function* setPassword(): TalkProgramGenerator {
   const password = yield {
     message: 'Please enter a password',
     isValidYield: true,

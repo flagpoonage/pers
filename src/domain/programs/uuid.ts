@@ -1,11 +1,7 @@
-import { PersController, setCommandColor } from '../controller';
 import { TalkProgramGenerator } from '../program';
-import { isValidColor } from './program-utils';
 import { v4 as uuid } from 'uuid';
 
-export async function* createUuid(
-  controller: PersController
-): TalkProgramGenerator {
+export async function* createUuid(): TalkProgramGenerator {
   let countStr = yield {
     message: 'How many UUIDs do you want to generate?',
     isValidYield: true,

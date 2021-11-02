@@ -1,6 +1,9 @@
 import { PersController } from './controller';
 
 export type TalkProgram = (controller: PersController) => TalkProgramGenerator;
+export type TalkCommand = (
+  controller: PersController
+) => Promise<ProgramOutput>;
 export type TalkProgramGenerator = AsyncGenerator<
   ProgramOutput,
   ProgramOutput,

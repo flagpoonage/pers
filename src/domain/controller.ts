@@ -18,6 +18,7 @@ import { v4 as uuid } from 'uuid';
 import {
   CommandEntryOptions,
   createDefaultCommandEntryOptions,
+  TalkCommand,
   TalkProgram,
   TalkProgramGenerator,
 } from './program';
@@ -36,7 +37,7 @@ export interface PersController {
   commandColor: string;
   users: Map<string, OtherUser>;
   emitter: Emitter<PersController>;
-  programs: Record<string, TalkProgram>;
+  programs: Record<string, TalkProgram | TalkCommand>;
   commandExecution: TalkProgramGenerator | null;
   commandEntryOptions: CommandEntryOptions;
 }
@@ -72,13 +73,6 @@ export function triggerCommandColorChange(controller: PersController) {
 
 export function triggerCommandEntryChange(controller: PersController) {
   triggerChange(controller, 'change_command_entry');
-}
-
-export function setCommandEntry(
-  controller: PersController,
-  commandEntry: CommandEntryOptions
-) {
-  controller;
 }
 
 export function setCommandColor(controller: PersController, color: string) {
@@ -244,30 +238,42 @@ export function parseArguments(command: string) {
   return matches;
 }
 
+export async function continueProgramExecution(
+  controller: PersController,
+  currentProgram: TalkProgramGenerator,
+  conversation: PersConversation,
+  command: string
+) {
+  const { done, value } = await currentProgram.next(command);
+
+  insertMessageInConversation(
+    conversation,
+    createMessage(SystemUser.userId, value.message)
+  );
+
+  if (done) {
+    controller.commandExecution = null;
+    controller.commandEntryOptions = createDefaultCommandEntryOptions();
+  } else {
+    controller.commandEntryOptions =
+      value.nextEntryOptions ?? createDefaultCommandEntryOptions();
+  }
+
+  return triggerCommandEntryChange(controller);
+}
+
 export async function sendCommandToController(
   controller: PersController,
   conversation: PersConversation,
   command: string
 ) {
   if (controller.commandExecution) {
-    const { done, value } = await controller.commandExecution.next(command);
-
-    insertMessageInConversation(
+    return continueProgramExecution(
+      controller,
+      controller.commandExecution,
       conversation,
-      createMessage(SystemUser.userId, value.message)
+      command
     );
-
-    if (done) {
-      controller.commandExecution = null;
-      controller.commandEntryOptions = createDefaultCommandEntryOptions();
-    } else {
-      controller.commandEntryOptions =
-        value.nextEntryOptions ?? createDefaultCommandEntryOptions();
-    }
-
-    triggerCommandEntryChange(controller);
-
-    return;
   }
 
   const [programName, ...rest] = command.split(' ');
@@ -291,11 +297,21 @@ export async function sendCommandToController(
 
   const programIteration = program(controller);
 
+  if ('then' in programIteration) {
+    const { message } = await programIteration;
+
+    insertMessageInConversation(
+      conversation,
+      createMessage(SystemUser.userId, message)
+    );
+    return;
+  }
+
+  controller.commandExecution = programIteration;
+
   const executionArgs = programArgs.slice();
   let nextArgument = '';
   let initialExecution = true;
-
-  controller.commandExecution = programIteration;
 
   do {
     const { done, value } = await (initialExecution

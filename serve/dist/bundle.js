@@ -22474,7 +22474,7 @@ Here is a list of commands that you may find useful. If you are in a chat with a
   }
 
   // src/domain/programs/password.ts
-  async function* setPassword(controller) {
+  async function* setPassword() {
     const password = yield {
       message: "Please enter a password",
       isValidYield: true,
@@ -22490,7 +22490,7 @@ Here is a list of commands that you may find useful. If you are in a chat with a
   }
 
   // src/domain/programs/uuid.ts
-  async function* createUuid(controller) {
+  async function* createUuid() {
     let countStr = yield {
       message: "How many UUIDs do you want to generate?",
       isValidYield: true,
@@ -22525,7 +22525,7 @@ ${uuids.map((a) => `* ${a}`).join("\n")}`;
   }
 
   // src/domain/programs/multi-yeild.ts
-  async function* multiYield(controller) {
+  async function* multiYield() {
     const one = yield {
       message: "Yeild 1",
       isValidYield: true
@@ -22538,23 +22538,15 @@ ${uuids.map((a) => `* ${a}`).join("\n")}`;
       message: `Yeild 3 ${one} ${two}`,
       isValidYield: true
     };
-    const four = yield {
-      message: `Yeild 4 ${one} ${two} ${thr}`,
-      isValidYield: true
-    };
-    const five = yield {
-      message: `Yeild 5 ${one} ${two} ${thr} ${four}`,
-      isValidYield: true
-    };
     return {
-      message: `Finished`,
+      message: `Finished ${one} ${two} ${thr}`,
       isValidYield: true
     };
   }
 
   // src/domain/programs/epoch.ts
-  async function* epoch(controller) {
-    yield {
+  async function epoch() {
+    return {
       message: new Date().getTime().toString(),
       isValidYield: true
     };
@@ -22681,18 +22673,20 @@ ${uuids.map((a) => `* ${a}`).join("\n")}`;
     } while (nextMatch !== null);
     return matches;
   }
+  async function continueProgramExecution(controller, currentProgram, conversation, command) {
+    const { done, value } = await currentProgram.next(command);
+    insertMessageInConversation(conversation, createMessage(SystemUser.userId, value.message));
+    if (done) {
+      controller.commandExecution = null;
+      controller.commandEntryOptions = createDefaultCommandEntryOptions();
+    } else {
+      controller.commandEntryOptions = value.nextEntryOptions ?? createDefaultCommandEntryOptions();
+    }
+    return triggerCommandEntryChange(controller);
+  }
   async function sendCommandToController(controller, conversation, command) {
     if (controller.commandExecution) {
-      const { done, value } = await controller.commandExecution.next(command);
-      insertMessageInConversation(conversation, createMessage(SystemUser.userId, value.message));
-      if (done) {
-        controller.commandExecution = null;
-        controller.commandEntryOptions = createDefaultCommandEntryOptions();
-      } else {
-        controller.commandEntryOptions = value.nextEntryOptions ?? createDefaultCommandEntryOptions();
-      }
-      triggerCommandEntryChange(controller);
-      return;
+      return continueProgramExecution(controller, controller.commandExecution, conversation, command);
     }
     const [programName, ...rest] = command.split(" ");
     const programArgs = parseArguments(rest.join(" "));
@@ -22703,10 +22697,15 @@ ${uuids.map((a) => `* ${a}`).join("\n")}`;
       return;
     }
     const programIteration = program(controller);
+    if ("then" in programIteration) {
+      const { message } = await programIteration;
+      insertMessageInConversation(conversation, createMessage(SystemUser.userId, message));
+      return;
+    }
+    controller.commandExecution = programIteration;
     const executionArgs = programArgs.slice();
     let nextArgument = "";
     let initialExecution = true;
-    controller.commandExecution = programIteration;
     do {
       const { done, value } = await (initialExecution ? programIteration.next() : programIteration.next(nextArgument));
       initialExecution = false;
