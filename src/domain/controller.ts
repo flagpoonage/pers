@@ -25,9 +25,7 @@ import {
 import { setColor } from './programs/set-color';
 import { setCmdColor } from './programs/set-cmd-color';
 import { setSysColor } from './programs/set-sys-color';
-import { setPassword } from './programs/password';
 import { createUuid } from './programs/uuid';
-import { multiYield } from './programs/multi-yeild';
 import { epoch } from './programs/epoch';
 import { prettyJson } from './programs/pretty-json';
 import { dateFmt } from './programs/date-fmt';
@@ -142,8 +140,6 @@ export function createController(): PersController {
       'set-sys-color': setSysColor,
       'set-cmd-color': setCmdColor,
       'pretty-json': prettyJson,
-      password: setPassword,
-      yield: multiYield,
       epoch: epoch,
       'date-fmt': dateFmt,
     },

@@ -22471,22 +22471,6 @@ Here is a list of commands that you may find useful. If you are in a chat with a
     };
   }
 
-  // src/domain/programs/password.ts
-  async function* setPassword() {
-    const password = yield {
-      message: "Please enter a password",
-      isValidYield: true,
-      nextEntryOptions: {
-        mask: true,
-        label: "Password"
-      }
-    };
-    return {
-      message: `Password received ${password}`,
-      isValidYield: true
-    };
-  }
-
   // src/domain/programs/uuid.ts
   async function* createUuid() {
     let countStr = yield {
@@ -22518,26 +22502,6 @@ Here is a list of commands that you may find useful. If you are in a chat with a
 ${uuids.join("\n")}`;
     return {
       message,
-      isValidYield: true
-    };
-  }
-
-  // src/domain/programs/multi-yeild.ts
-  async function* multiYield() {
-    const one = yield {
-      message: "Yeild 1",
-      isValidYield: true
-    };
-    const two = yield {
-      message: `Yeild 2 ${one}`,
-      isValidYield: true
-    };
-    const thr = yield {
-      message: `Yeild 3 ${one} ${two}`,
-      isValidYield: true
-    };
-    return {
-      message: `Finished ${one} ${two} ${thr}`,
       isValidYield: true
     };
   }
@@ -22682,8 +22646,6 @@ ${output}`,
         "set-sys-color": setSysColor,
         "set-cmd-color": setCmdColor,
         "pretty-json": prettyJson,
-        password: setPassword,
-        yield: multiYield,
         epoch,
         "date-fmt": dateFmt
       }
