@@ -1,0 +1,27 @@
+.flex {
+  display: flex;
+
+  &.col {
+    flex-direction: column;
+  }
+
+  &.row {
+    flex-direction: row;
+  }
+
+  &.justify-end {
+    justify-content: end;
+  }
+
+  > .grow {
+    flex-grow: 1;
+  }
+
+  > .no-shrink {
+    flex-shrink: 0;
+  }
+
+  > .no-grow {
+    flex-grow: 0;
+  }
+}

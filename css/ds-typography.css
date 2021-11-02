@@ -1,0 +1,12 @@
+.ff {
+  font-family: 'Azeret Mono', monospace;
+  line-height: 100%;
+}
+
+.fsz {
+  font-size: var(--size);
+}
+
+.lh {
+  line-height: var(--lhsize);
+}

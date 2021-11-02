@@ -1,0 +1,15 @@
+.fix {
+  position: fixed;
+}
+
+.abs {
+  position: absolute;
+}
+
+.rel {
+  position: relative;
+}
+
+.scroll-y {
+  overflow-y: auto;
+}

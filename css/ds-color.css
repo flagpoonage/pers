@@ -1,0 +1,41 @@
+.bg-clr-dark {
+  background-color: var(--clr-dark);
+}
+
+.bg-clr-dark-d1 {
+  background-color: var(--clr-dark-d1);
+}
+.bg-clr-dark-d2 {
+  background-color: var(--clr-dark-d2);
+}
+.bg-clr-dark-d3 {
+  background-color: var(--clr-dark-d3);
+}
+
+.clr-white {
+  color: var(--clr-white);
+}
+
+.clr-white-d1 {
+  color: var(--clr-white-d1);
+}
+
+.clr-white-d2 {
+  color: var(--clr-white-d2);
+}
+
+.clr-white-d3 {
+  color: var(--clr-white-d3);
+}
+
+.clr-white-d4 {
+  color: var(--clr-white-d4);
+}
+
+.clr-white-d5 {
+  color: var(--clr-white-d5);
+}
+
+.clr-trim {
+  color: var(--clr-trim);
+}

@@ -1,0 +1,28 @@
+.w {
+  width: 100%;
+}
+
+.w-16 {
+  width: calc(var(--size) * 16);
+}
+
+.w-14 {
+  width: calc(var(--size) * 14);
+}
+
+.h {
+  height: 100%;
+}
+
+.wh {
+  width: 100%;
+  height: 100%;
+}
+
+.vpw: {
+  width: 1vw;
+}
+
+.vph {
+  height: 1vh;
+}

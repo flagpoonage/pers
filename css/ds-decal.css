@@ -1,0 +1,25 @@
+.no-border {
+  border: none;
+}
+
+.no-outline {
+  outline: none;
+}
+
+.ws-preserve {
+  white-space: pre-wrap;
+
+  &.no-wrap {
+    white-space: pre;
+  }
+}
+
+.ws-no-wrap {
+  white-space: nowrap;
+}
+
+.ellipsis {
+  overflow-y: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}

@@ -1,0 +1,41 @@
+:root {
+  /* Sizes */
+  --size: 1rem;
+  --size-l1: 1.2rem;
+  --size-l2: 1.5rem;
+  --size-l3: 2rem;
+  --size-l4: 3rem;
+  --size-s1: 0.875rem;
+  --size-s2: 0.75rem;
+  --size-s3: 0.6rem;
+
+  --size-x2: 2rem;
+  --size-x3: 3rem;
+  --size-x4: 4rem;
+  --size-x5: 5rem;
+
+  --fsize: 14px;
+
+  --lhsize: var(--size-l2);
+
+  /* Colours */
+  --clr-dark: #334;
+  --clr-dark-d1: #2b2b39;
+  --clr-dark-d2: #22222e;
+  --clr-dark-d3: #1a1a22;
+  --clr-dark-d4: #111117;
+  --clr-dark-d5: #09090c;
+  --clr-dark-l1: #3b3b4f;
+  --clr-dark-l2: #44445a;
+  --clr-dark-l3: #4c4c66;
+  --clr-dark-l4: #555571;
+  --clr-dark-l5: #5d5d7c;
+  --clr-white: #f5f5f7;
+  --clr-white-d1: #f5f5f7;
+  --clr-white-d2: #eaeaee;
+  --clr-white-d3: #dfdfe6;
+  --clr-white-d4: #d4d4dd;
+  --clr-white-d5: #c9c9d4;
+
+  --clr-trim: lime;
+}

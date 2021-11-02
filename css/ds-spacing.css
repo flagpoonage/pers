@@ -1,0 +1,55 @@
+.pad {
+  padding: var(--size);
+}
+
+.pad-y2 {
+  padding-top: calc(var(--size) / 2);
+  padding-bottom: calc(var(--size) / 2);
+}
+
+.pad-children-col {
+  &:first-child {
+    padding-top: var(--size);
+  }
+
+  &:nth-child(1n) {
+    padding-left: var(--size);
+    padding-right: var(--size);
+  }
+
+  &:last-child {
+    padding-bottom: var(--size);
+  }
+}
+
+.pad-r {
+  padding-right: var(--size);
+}
+
+.pad-l {
+  padding-left: var(--size);
+}
+
+.pad-t {
+  padding-top: var(--size);
+
+  &.pad-tx-lh {
+    padding-top: calc(var(--size) + var(--lhsize));
+  }
+}
+
+.pad-b1 {
+  padding: var(--size-l1);
+}
+
+.mg {
+  margin: var(--size);
+}
+
+.mg-l {
+  margin-left: var(--size);
+}
+
+.mg-2l {
+  margin-left: var(--size-x2);
+}
