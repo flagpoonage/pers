@@ -3,7 +3,6 @@ import {
   isUserAuthenticated,
   PersController,
   sendCommandToAgent,
-  setChatServer,
 } from '../controller';
 import { insertMessageInConversation } from '../conversation';
 import { createMessage } from '../message';
@@ -13,8 +12,8 @@ import { getJsonErrorMessage, getJsonHttp, JsonError } from './program-utils';
 
 export interface InfoOutputDto {
   data: {
+    api_host: string;
     socket_host: string;
-    is_secure: boolean;
   };
 }
 
@@ -60,15 +59,11 @@ export async function* setServer(
     sendCommandToAgent(
       controller,
       conversation,
-      `chat-ws change-server ${result.data.socket_host} ${
-        result.data.is_secure ? 'secure' : 'not-secure'
-      }`
+      `remote-server change-server ${result.data.api_host} ${result.data.socket_host}`
     );
 
     return {
-      message: `Server changed successfully:\n\nSocket host: ${
-        result.data.socket_host
-      }\nSecure: ${result.data.is_secure ? 'Yes' : 'No'}`,
+      message: `Server changed successfully:\n\nAPI host: ${result.data.api_host}\nSocket host: ${result.data.socket_host}`,
       isValidYield: true,
     };
   } catch (exception) {

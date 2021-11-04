@@ -1,4 +1,5 @@
-import { isChatServerAssigned, PersController } from '../controller';
+import { getRemoteServerAgentState } from '../agents/remote-server.agent';
+import { PersController } from '../controller';
 import { PersProgramGenerator } from '../program';
 import { getJsonErrorMessage, JsonError, postJsonHttp } from './program-utils';
 
@@ -21,7 +22,16 @@ interface RegistrationInput {
 export async function* register(
   controller: PersController
 ): PersProgramGenerator {
-  if (!isChatServerAssigned(controller)) {
+  const agent_state = getRemoteServerAgentState(controller);
+
+  if (!agent_state) {
+    return {
+      message: `The 'remote-server' agent is not currently started`,
+      isValidYield: true,
+    };
+  }
+
+  if (!agent_state.hostSettings) {
     return {
       message:
         'You must be connected to a server before you can register. Run the `set-svr` command to connect.',

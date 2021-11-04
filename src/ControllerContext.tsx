@@ -29,7 +29,7 @@ export function ControllerProvider({
   const controller = useRef(createController());
 
   useEffect(() => {
-    startAgent(controller.current, 'chat-ws');
+    startAgent(controller.current, 'remote-server');
   }, []);
 
   return (

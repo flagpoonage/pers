@@ -247,9 +247,13 @@ export function getJsonErrorMessage(error: JsonError): string {
       return `[${error.status}] An unkown client error occurred.\n\nData: ${error.data}`;
     }
 
-    return `[${error.status}] ${
-      error.data.data.message
-    }\n\nDetails:\n\n${error.data.data.details
+    const base_message = `[${error.status}] ${error.data.data.message}`;
+
+    if (error.data.data.details.length === 0) {
+      return base_message;
+    }
+
+    return `${base_message}\n\nDetails:\n\n${error.data.data.details
       .map((a) => `- ${a}`)
       .join('\n')}`;
   }

@@ -1,20 +1,20 @@
-export interface ChatServerSettings {
+export interface SocketSettings {
   socket_host: string;
   is_secure: boolean;
 }
 
-export function createChatServerSettings(
+export function createSocketSettings(
   socket_host: string,
   is_secure: boolean
-): ChatServerSettings {
+): SocketSettings {
   return {
     socket_host,
     is_secure,
   };
 }
 
-export function createChatServerConnection(
-  settings: ChatServerSettings,
+export function createSocketConnection(
+  settings: SocketSettings,
   token: string
 ) {
   const protocol = settings.is_secure ? 'wss' : 'ws';

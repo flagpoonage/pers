@@ -32,19 +32,14 @@ import { clear } from './programs/clear.program';
 import { intro } from './programs/intro.program';
 import { register } from './programs/register.program';
 import { setServer } from './programs/set-svr.program';
-import { ChatServerSettings, createChatServerSettings } from './chat-server';
 import {
-  chatWsAgent,
+  remoteServerAgent,
   PersAgentGenerator,
-  PersAgentStatus,
-} from './agents/chat-ws.agent';
+} from './agents/remote-server.agent';
 
 export interface PersController {
   currentUser: SelfUser;
   conversations: Map<string, PersConversation>;
-  currentChatServer: {
-    settings: ChatServerSettings;
-  } | null;
   currentConversation: string;
   commandColor: string;
   users: Map<string, OtherUser>;
@@ -60,7 +55,7 @@ export interface PersAgentController {
   name: string;
   init: (controller: PersController) => PersAgentGenerator;
   executor: PersAgentGenerator | null;
-  status: PersAgentStatus | null;
+  state: unknown;
 }
 
 export function createSelfUser(): SelfUser {
@@ -82,10 +77,6 @@ export function triggerChange(controller: PersController, key: string) {
 
 export function isUserAuthenticated(controller: PersController) {
   return controller.currentUser.authenticated;
-}
-
-export function isChatServerAssigned(controller: PersController) {
-  return !!controller.currentChatServer;
 }
 
 export function triggerSelfChange(controller: PersController) {
@@ -139,16 +130,6 @@ export function setSystemUserProperties(
   triggerUsersChange(controller);
 }
 
-export function setChatServer(
-  controller: PersController,
-  socket_host: string,
-  is_secure: boolean
-) {
-  controller.currentChatServer = {
-    settings: createChatServerSettings(socket_host, is_secure),
-  };
-}
-
 export function createRootConversation(
   includeIntro: boolean
 ): PersConversation {
@@ -174,7 +155,6 @@ export function createController(): PersController {
     conversations: new Map<string, PersConversation>([
       [rootConversation.id, rootConversation],
     ]),
-    currentChatServer: null,
     currentConversation: rootConversation.id,
     users: new Map<string, OtherUser>([[SystemUser.userId, SystemUser]]),
     commandColor: '#00cfff',
@@ -189,12 +169,12 @@ export function createController(): PersController {
 export function createDefaultAgents(): Map<string, PersAgentController> {
   return new Map([
     [
-      'chat-ws',
+      'remote-server',
       {
-        name: 'chat-ws',
-        init: chatWsAgent,
+        name: 'remote-server',
+        init: remoteServerAgent,
         executor: null,
-        status: null,
+        state: null,
       },
     ],
   ]);
@@ -266,6 +246,25 @@ export function stopAgent(controller: PersController, agentName: string) {
   }
 
   sendCommandToAgent(controller, conversation, `${agentName} start`);
+}
+
+export function isAgentRunning(controller: PersController, agent_name: string) {
+  const agent = controller.agents.get(agent_name);
+  return !!(agent && agent.executor);
+}
+
+export function getAgentState(controller: PersController, agent_name: string) {
+  const agent = getAgent(controller, agent_name);
+
+  if (!agent) {
+    return;
+  }
+
+  return agent.state;
+}
+
+export function getAgent(controller: PersController, agent_name: string) {
+  return controller.agents.get(agent_name);
 }
 
 export async function sendMessageToController(
@@ -515,9 +514,9 @@ export async function sendCommandToAgent(
       if (agent_response.done) {
         // This stops the agent and will trigger a message at the end of the function
         agent.executor = null;
-        agent.status = null;
+        agent.state = null;
       } else {
-        agent.status = agent_response.value.status;
+        agent.state = agent_response.value.state;
       }
     }
   } else if (agentCommand === 'stop') {
@@ -551,7 +550,7 @@ export async function sendCommandToAgent(
       }
 
       agent.executor = null;
-      agent.status = null;
+      agent.state = null;
     }
   } else if (agent.executor) {
     const agent_response = await agent.executor.next([
@@ -571,7 +570,9 @@ export async function sendCommandToAgent(
 
     if (agent_response.done) {
       agent.executor = null;
-      agent.status = null;
+      agent.state = null;
+    } else {
+      agent.state = agent_response.value.state;
     }
   } else {
     return insertMessageInConversation(
