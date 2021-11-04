@@ -5,10 +5,9 @@
   "author": "James <pokinoice@live.com>",
   "license": "MIT",
   "scripts": {
-    "dev": "yarn clean && concurrently --names server,postcss,typecheck,esbuild -c green.bold,yellow.bold,red.bold,blue.bold --kill-others yarn:dev-server yarn:compile:postcss yarn:typecheck yarn:bundle",
-    "compile:rescript": "NINJA_ANSI_FORCED=1 rescript build -w",
+    "dev": "yarn clean && concurrently --names server,postcss,typecheck,esbuild -c green.bold,yellow.bold,red.bold,blue.bold --kill-others yarn:dev-server yarn:postcss yarn:typecheck yarn:bundle",
     "typecheck": "tsc src/index.tsx --moduleResolution node --watch --noEmit --jsx react-jsx --preserveWatchOutput --esModuleInterop --target es2021",
-    "compile:postcss": "postcss css/index.css --verbose -w -u postcss-import -u postcss-nested -o serve/dist/bundle.css",
+    "postcss": "postcss css/index.css --verbose -w -u postcss-import -u postcss-nested -o serve/dist/bundle.css",
     "bundle": "esbuild src/index.tsx --outfile=serve/dist/bundle.js --bundle --sourcemap --platform=browser --define:process.env.NODE_ENV='\"development\"' --watch --color=true",
     "dev-server": "PORT=5000 live-server serve --host=localhost",
     "clean": "rimraf serve/dist"
@@ -16,7 +15,8 @@
   "dependencies": {
     "date-fns": "^2.25.0",
     "react": "^17.0.2",
-    "react-dom": "^17.0.2"
+    "react-dom": "^17.0.2",
+    "uuid": "^8.3.2"
   },
   "devDependencies": {
     "@types/node": "^16.11.6",
@@ -34,7 +34,6 @@
     "postcss-cli": "^9.0.1",
     "postcss-import": "^14.0.2",
     "postcss-nested": "^5.0.6",
-    "typescript": "^4.4.4",
-    "uuid": "^8.3.2"
+    "typescript": "^4.4.4"
   }
 }
