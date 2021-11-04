@@ -20,7 +20,6 @@ import {
   removeConversationChangeListener,
 } from './domain/conversation';
 import { PersMessageGroup } from './domain/message-group';
-import { getSystemIntroductionText } from './domain/system';
 
 const ControllerContext = React.createContext<PersController | null>(null);
 

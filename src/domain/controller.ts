@@ -505,7 +505,10 @@ export async function sendCommandToAgent(
       if (agent_response.value.message) {
         insertMessageInConversation(
           conversation,
-          createMessage(SystemUser.userId, agent_response.value.message)
+          createMessage(
+            SystemUser.userId,
+            `[${agent.name}] - ${agent_response.value.message}`
+          )
         );
       }
 
@@ -540,7 +543,10 @@ export async function sendCommandToAgent(
       if (agent_response.value.message) {
         insertMessageInConversation(
           conversation,
-          createMessage(SystemUser.userId, agent_response.value.message)
+          createMessage(
+            SystemUser.userId,
+            `[${agent.name}] - ${agent_response.value.message}`
+          )
         );
       }
 
@@ -549,14 +555,17 @@ export async function sendCommandToAgent(
     }
   } else if (agent.executor) {
     const agent_response = await agent.executor.next([
-      'stop',
+      agentCommand,
       ...parseArguments(agentRest.join(' ')),
     ]);
 
     if (agent_response.value.message) {
       insertMessageInConversation(
         conversation,
-        createMessage(SystemUser.userId, agent_response.value.message)
+        createMessage(
+          SystemUser.userId,
+          `[${agent.name}] - ${agent_response.value.message}`
+        )
       );
     }
 

@@ -30,6 +30,49 @@ interface AgentLoopResult {
   next_state: ChatWsAgentState;
 }
 
+function changeServer(
+  controller: PersController,
+  last_status: PersAgentStatus,
+  last_state: ChatWsAgentState,
+  command_args: string[]
+): AgentLoopResult {
+  const [socket_host, is_secure] = command_args;
+
+  const makeError = (message: string) => ({
+    next_message: message,
+    next_state: last_state,
+    next_status: last_status,
+  });
+
+  if (!socket_host) {
+    return makeError(`Missing socket host address`);
+  }
+
+  if (!is_secure) {
+    return makeError(`Missing is_secure flag`);
+  }
+
+  if (!['secure', 'not-secure'].includes(is_secure)) {
+    return makeError(
+      `Expected is_secure flag with value 'secure' or 'not-secure' but received '${is_secure}'`
+    );
+  }
+
+  const next_state: ChatWsAgentState = {
+    ...last_state,
+    serverSettings: {
+      socket_host: socket_host,
+      is_secure: is_secure === 'secure',
+    },
+  };
+
+  return {
+    next_message: 'Server settings updated',
+    next_status: last_status,
+    next_state,
+  };
+}
+
 async function agentLoop(
   controller: PersController,
   last_status: PersAgentStatus,
@@ -37,6 +80,11 @@ async function agentLoop(
   incoming_command: string,
   command_args: string[]
 ): Promise<AgentLoopResult> {
+  switch (incoming_command) {
+    case 'change-server':
+      return changeServer(controller, last_status, last_state, command_args);
+  }
+
   return {
     next_message: null,
     next_state: last_state,
@@ -61,8 +109,7 @@ export async function* chatWsAgent(
   const message: {
     value: string | null;
   } = {
-    value:
-      '[chat-ws] agent started. Control it with `agent-ctl chat-ws [command]',
+    value: 'Chat websocket agent started successfully',
   };
 
   do {

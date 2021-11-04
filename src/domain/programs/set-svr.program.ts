@@ -2,6 +2,7 @@ import {
   getCurrentConversationFromController,
   isUserAuthenticated,
   PersController,
+  sendCommandToAgent,
   setChatServer,
 } from '../controller';
 import { insertMessageInConversation } from '../conversation';
@@ -56,7 +57,13 @@ export async function* setServer(
       `http://${serverAddress}/info`
     );
 
-    setChatServer(controller, result.data.socket_host, result.data.is_secure);
+    sendCommandToAgent(
+      controller,
+      conversation,
+      `chat-ws change-server ${result.data.socket_host} ${
+        result.data.is_secure ? 'secure' : 'not-secure'
+      }`
+    );
 
     return {
       message: `Server changed successfully:\n\nSocket host: ${
