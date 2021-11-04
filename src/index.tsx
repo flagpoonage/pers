@@ -18,4 +18,18 @@ function getRoot() {
   return el;
 }
 
+const Ws = new WebSocket('ws://localhost:4444');
+
+Ws.onerror = function (e) {
+  console.error(e);
+};
+
+Ws.onmessage = function (ev) {
+  console.log('Message', ev);
+};
+
+Ws.onclose = function (ev) {
+  console.log('Closing', ev);
+};
+
 ReactDOM.render(<App />, getRoot());

@@ -164,3 +164,95 @@ export function isValidColor(color: string) {
 
   return false;
 }
+
+export interface PostJsonErrorRepsonse {
+  type: string;
+  data: {
+    message: string;
+    details: string[];
+  };
+}
+export class JsonError extends Error {
+  status: number;
+  data: PostJsonErrorRepsonse | string | null;
+
+  constructor(status: number, data: PostJsonErrorRepsonse | string | null) {
+    super('Error making POST json request');
+
+    this.status = status;
+    this.data = data;
+  }
+}
+
+export async function readResponseData(response: Response) {
+  try {
+    return await response.json();
+  } catch {
+    console.warn('Non-json response');
+  }
+
+  try {
+    return await response.text();
+  } catch {
+    console.warn('Non-text response');
+  }
+
+  return null;
+}
+
+export async function getJsonHttp<O>(url: string): Promise<O> {
+  const result = await fetch(url, {
+    method: 'GET',
+  });
+
+  const outputData = await readResponseData(result);
+
+  if (result.status >= 400) {
+    throw new JsonError(result.status, outputData);
+  }
+
+  return outputData as O;
+}
+
+export async function postJsonHttp<I, O>(url: string, data: I): Promise<O> {
+  const result = await fetch(url, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(data),
+  });
+
+  const outputData = await readResponseData(result);
+
+  if (result.status >= 400) {
+    throw new JsonError(result.status, outputData);
+  }
+
+  return outputData as O;
+}
+
+export function getJsonErrorMessage(error: JsonError): string {
+  if (error.status >= 500) {
+    return `[${
+      error.status
+    }] An internal error occurred on the API\n\nData: ${JSON.stringify(
+      error.data
+    )}`;
+  } else if (error.status >= 400) {
+    if (error.data === null) {
+      return `[${error.status}] An unkown client error occurred. No response data is available`;
+    }
+    if (typeof error.data === 'string') {
+      return `[${error.status}] An unkown client error occurred.\n\nData: ${error.data}`;
+    }
+
+    return `[${error.status}] ${
+      error.data.data.message
+    }\n\nDetails:\n\n${error.data.data.details
+      .map((a) => `- ${a}`)
+      .join('\n')}`;
+  }
+
+  return `[${error.status}] An unexpected status was received`;
+}

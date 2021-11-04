@@ -1,7 +1,7 @@
 import { format } from 'date-fns';
-import { TalkProgramGenerator } from '../program';
+import { PersProgramGenerator } from '../program';
 
-export async function* dateFmt(): TalkProgramGenerator {
+export async function* dateFmt(): PersProgramGenerator {
   const content = yield {
     message: 'Enter the date format you want to use',
     isValidYield: true,

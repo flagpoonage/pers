@@ -1,10 +1,10 @@
 import { PersController, setCommandColor } from '../controller';
-import { TalkProgramGenerator } from '../program';
+import { PersProgramGenerator } from '../program';
 import { isValidColor } from './program-utils';
 
 export async function* setCmdColor(
   controller: PersController
-): TalkProgramGenerator {
+): PersProgramGenerator {
   let color = yield {
     message: 'Please choose a colour for the system user',
     isValidYield: true,

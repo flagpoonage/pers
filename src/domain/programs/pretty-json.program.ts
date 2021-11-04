@@ -1,6 +1,6 @@
-import { TalkProgramGenerator } from '../program';
+import { PersProgramGenerator } from '../program';
 
-export async function* prettyJson(): TalkProgramGenerator {
+export async function* prettyJson(): PersProgramGenerator {
   const content = yield {
     message: 'Enter your JSON content',
     isValidYield: true,

@@ -1,10 +1,10 @@
 import { PersController, setSelfUserProperties } from '../controller';
-import { TalkProgramGenerator } from '../program';
+import { PersProgramGenerator } from '../program';
 import { isValidColor } from './program-utils';
 
 export async function* setColor(
   controller: PersController
-): TalkProgramGenerator {
+): PersProgramGenerator {
   let color = yield {
     message: 'Please choose a colour for the your own user messages',
     isValidYield: true,

@@ -17,31 +17,50 @@ import { v4 as uuid } from 'uuid';
 import {
   CommandEntryOptions,
   createDefaultCommandEntryOptions,
-  TalkCommand,
-  TalkProgram,
-  TalkProgramGenerator,
+  PersCommand,
+  PersProgram,
+  PersProgramGenerator,
 } from './program';
-import { setColor } from './programs/set-color';
-import { setCmdColor } from './programs/set-cmd-color';
-import { setSysColor } from './programs/set-sys-color';
-import { createUuid } from './programs/uuid';
-import { epoch } from './programs/epoch';
-import { prettyJson } from './programs/pretty-json';
-import { dateFmt } from './programs/date-fmt';
-import { clear } from './programs/clear';
-import { intro } from './programs/intro';
+import { setColor } from './programs/set-color.program';
+import { setCmdColor } from './programs/set-cmd-color.program';
+import { setSysColor } from './programs/set-sys-color.program';
+import { createUuid } from './programs/uuid.program';
+import { epoch } from './programs/epoch.program';
+import { prettyJson } from './programs/pretty-json.program';
+import { dateFmt } from './programs/date-fmt.program';
+import { clear } from './programs/clear.program';
+import { intro } from './programs/intro.program';
+import { register } from './programs/register.program';
+import { setServer } from './programs/set-svr.program';
+import { ChatServerSettings, createChatServerSettings } from './chat-server';
+import {
+  chatWsAgent,
+  PersAgentGenerator,
+  PersAgentStatus,
+} from './agents/chat-ws.agent';
 
 export interface PersController {
   currentUser: SelfUser;
   conversations: Map<string, PersConversation>;
+  currentChatServer: {
+    settings: ChatServerSettings;
+  } | null;
   currentConversation: string;
   commandColor: string;
   users: Map<string, OtherUser>;
   emitter: Emitter<PersController>;
-  programs: Record<string, TalkProgram | TalkCommand>;
-  commandExecution: TalkProgramGenerator | null;
+  programs: Record<string, PersProgram | PersCommand>;
+  commandExecution: PersProgramGenerator | null;
   commandEntryOptions: CommandEntryOptions;
   history: string[];
+  agents: Map<string, PersAgentController>;
+}
+
+export interface PersAgentController {
+  name: string;
+  init: (controller: PersController) => PersAgentGenerator;
+  executor: PersAgentGenerator | null;
+  status: PersAgentStatus | null;
 }
 
 export function createSelfUser(): SelfUser {
@@ -59,6 +78,14 @@ export function triggerChange(controller: PersController, key: string) {
   if (handlers && handlers.length > 0) {
     handlers.forEach((handler) => handler(controller));
   }
+}
+
+export function isUserAuthenticated(controller: PersController) {
+  return controller.currentUser.authenticated;
+}
+
+export function isChatServerAssigned(controller: PersController) {
+  return !!controller.currentChatServer;
 }
 
 export function triggerSelfChange(controller: PersController) {
@@ -112,6 +139,16 @@ export function setSystemUserProperties(
   triggerUsersChange(controller);
 }
 
+export function setChatServer(
+  controller: PersController,
+  socket_host: string,
+  is_secure: boolean
+) {
+  controller.currentChatServer = {
+    settings: createChatServerSettings(socket_host, is_secure),
+  };
+}
+
 export function createRootConversation(
   includeIntro: boolean
 ): PersConversation {
@@ -132,10 +169,12 @@ export function createController(): PersController {
   const rootConversation = createRootConversation(true);
 
   return {
+    agents: createDefaultAgents(),
     currentUser: createSelfUser(),
     conversations: new Map<string, PersConversation>([
       [rootConversation.id, rootConversation],
     ]),
+    currentChatServer: null,
     currentConversation: rootConversation.id,
     users: new Map<string, OtherUser>([[SystemUser.userId, SystemUser]]),
     commandColor: '#00cfff',
@@ -143,17 +182,37 @@ export function createController(): PersController {
     emitter: createEmitter(),
     commandEntryOptions: createDefaultCommandEntryOptions(),
     history: [],
-    programs: {
-      uuid: createUuid,
-      'set-clr': setColor,
-      'set-sys-clr': setSysColor,
-      'set-cmd-clr': setCmdColor,
-      'pretty-json': prettyJson,
-      epoch: epoch,
-      'date-fmt': dateFmt,
-      clear: clear,
-      intro: intro,
-    },
+    programs: createDefaultPrograms(),
+  };
+}
+
+export function createDefaultAgents(): Map<string, PersAgentController> {
+  return new Map([
+    [
+      'chat-ws',
+      {
+        name: 'chat-ws',
+        init: chatWsAgent,
+        executor: null,
+        status: null,
+      },
+    ],
+  ]);
+}
+
+export function createDefaultPrograms() {
+  return {
+    uuid: createUuid,
+    'set-clr': setColor,
+    'set-sys-clr': setSysColor,
+    'set-cmd-clr': setCmdColor,
+    'pretty-json': prettyJson,
+    epoch: epoch,
+    'date-fmt': dateFmt,
+    clear: clear,
+    register: register,
+    intro: intro,
+    'set-svr': setServer,
   };
 }
 
@@ -189,10 +248,33 @@ export function getCurrentConversationFromController(
   );
 }
 
+export function startAgent(controller: PersController, agentName: string) {
+  const conversation = getCurrentConversationFromController(controller);
+
+  if (!conversation) {
+    throw new Error('Unable to start agent, cannot find conversation');
+  }
+
+  sendCommandToAgent(controller, conversation, `${agentName} start`);
+}
+
+export function stopAgent(controller: PersController, agentName: string) {
+  const conversation = getCurrentConversationFromController(controller);
+
+  if (!conversation) {
+    throw new Error('Unable to start agent, cannot find conversation');
+  }
+
+  sendCommandToAgent(controller, conversation, `${agentName} start`);
+}
+
 export async function sendMessageToController(
   controller: PersController,
   message: string
 ) {
+  if (message.trim().length === 0) {
+    return;
+  }
   const conversation = getCurrentConversationFromController(controller);
 
   if (!conversation) {
@@ -206,7 +288,9 @@ export async function sendMessageToController(
   const command =
     !isCommandMode && isCommandMessage ? message.split('\\c ')[1] : message;
 
-  controller.history.push(message);
+  if (!controller.commandEntryOptions.mask) {
+    controller.history.push(message);
+  }
 
   if (isCommandMessage || isCommandMode) {
     controller.commandEntryOptions.mask;
@@ -256,7 +340,7 @@ export function parseArguments(command: string) {
 
 export async function continueProgramExecution(
   controller: PersController,
-  currentProgram: TalkProgramGenerator,
+  currentProgram: PersProgramGenerator,
   conversation: PersConversation,
   command: string
 ) {
@@ -293,6 +377,11 @@ export async function sendCommandToController(
   }
 
   const [programName, ...rest] = command.split(' ');
+
+  if (programName === 'agent-ctl') {
+    return sendCommandToAgent(controller, conversation, rest.join(' '));
+  }
+
   const programArgs = parseArguments(rest.join(' '));
 
   console.log(programArgs);
@@ -342,7 +431,12 @@ export async function sendCommandToController(
       nextArgument = '';
     }
 
-    if (done || !value.isValidYield || !nextArgument) {
+    if (
+      done ||
+      !value.isValidYield ||
+      !nextArgument ||
+      value.nextEntryOptions?.mask
+    ) {
       insertMessageInConversation(
         conversation,
         createMessage(SystemUser.userId, value.message)
@@ -360,5 +454,130 @@ export async function sendCommandToController(
 
       return;
     }
-  } while (executionArgs.length > 0 || !!nextArgument);
+  } while (
+    (executionArgs.length > 0 || !!nextArgument) &&
+    !controller.commandEntryOptions.mask
+  );
+}
+
+export async function sendCommandToAgent(
+  controller: PersController,
+  conversation: PersConversation,
+  command: string
+) {
+  const [agentName, ...commandRest] = command.split(' ');
+
+  const agent = controller.agents.get(agentName);
+
+  if (!agent) {
+    return insertMessageInConversation(
+      conversation,
+      createMessage(
+        SystemUser.userId,
+        `Unrecognized agent name [${agentName}]. You may need to load the agent manually`
+      )
+    );
+  }
+
+  const [agentCommand, ...agentRest] = commandRest;
+
+  if (agentCommand === 'start') {
+    if (agent.executor) {
+      return insertMessageInConversation(
+        conversation,
+        createMessage(
+          SystemUser.userId,
+          `Agent [${agentName}] is already running.`
+        )
+      );
+    } else {
+      insertMessageInConversation(
+        conversation,
+        createMessage(SystemUser.userId, `Starting agent [${agentName}]...`)
+      );
+
+      agent.executor = agent.init(controller);
+      const agent_response = await agent.executor.next([
+        'start',
+        ...parseArguments(agentRest.join(' ')),
+      ]);
+
+      if (agent_response.value.message) {
+        insertMessageInConversation(
+          conversation,
+          createMessage(SystemUser.userId, agent_response.value.message)
+        );
+      }
+
+      if (agent_response.done) {
+        // This stops the agent and will trigger a message at the end of the function
+        agent.executor = null;
+        agent.status = null;
+      } else {
+        agent.status = agent_response.value.status;
+      }
+    }
+  } else if (agentCommand === 'stop') {
+    if (!agent.executor) {
+      return insertMessageInConversation(
+        conversation,
+        createMessage(
+          SystemUser.userId,
+          `Agent [${agentName}] is already stopped.`
+        )
+      );
+    } else {
+      insertMessageInConversation(
+        conversation,
+        createMessage(SystemUser.userId, `Stopping agent [${agentName}]...`)
+      );
+
+      const agent_response = await agent.executor.next([
+        'stop',
+        ...parseArguments(agentRest.join(' ')),
+      ]);
+
+      if (agent_response.value.message) {
+        insertMessageInConversation(
+          conversation,
+          createMessage(SystemUser.userId, agent_response.value.message)
+        );
+      }
+
+      agent.executor = null;
+      agent.status = null;
+    }
+  } else if (agent.executor) {
+    const agent_response = await agent.executor.next([
+      'stop',
+      ...parseArguments(agentRest.join(' ')),
+    ]);
+
+    if (agent_response.value.message) {
+      insertMessageInConversation(
+        conversation,
+        createMessage(SystemUser.userId, agent_response.value.message)
+      );
+    }
+
+    if (agent_response.done) {
+      agent.executor = null;
+      agent.status = null;
+    }
+  } else {
+    return insertMessageInConversation(
+      conversation,
+      createMessage(
+        SystemUser.userId,
+        `Command [${agentCommand}] could not be sent. Agent [${agentName}] is stopped`
+      )
+    );
+  }
+
+  if (!agent.executor) {
+    insertMessageInConversation(
+      conversation,
+      createMessage(SystemUser.userId, `Agent [${agentName}] has stopped`)
+    );
+  }
 }

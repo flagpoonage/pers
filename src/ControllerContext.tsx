@@ -12,6 +12,7 @@ import {
   watchControllerEvent,
   getCurrentConversationFromController,
   sendMessageToController,
+  startAgent,
 } from './domain/controller';
 import {
   addConversationChangeListener,
@@ -19,6 +20,7 @@ import {
   removeConversationChangeListener,
 } from './domain/conversation';
 import { PersMessageGroup } from './domain/message-group';
+import { getSystemIntroductionText } from './domain/system';
 
 const ControllerContext = React.createContext<PersController | null>(null);
 
@@ -26,6 +28,10 @@ export function ControllerProvider({
   children,
 }: React.PropsWithChildren<unknown>) {
   const controller = useRef(createController());
+
+  useEffect(() => {
+    startAgent(controller.current, 'chat-ws');
+  }, []);
 
   return (
     <ControllerContext.Provider value={controller.current}>

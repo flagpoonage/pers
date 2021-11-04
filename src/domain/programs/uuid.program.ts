@@ -1,7 +1,7 @@
-import { TalkProgramGenerator } from '../program';
+import { PersProgramGenerator } from '../program';
 import { v4 as uuid } from 'uuid';
 
-export async function* createUuid(): TalkProgramGenerator {
+export async function* createUuid(): PersProgramGenerator {
   let countStr = yield {
     message: 'How many UUIDs do you want to generate?',
     isValidYield: true,
