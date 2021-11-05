@@ -3,7 +3,7 @@ import { v4 as uuid } from 'uuid';
 
 export interface PersMessageGroup {
   id: string;
-  userId: string;
+  user_id: string;
   messages: PersMessage[];
 }
 
@@ -11,7 +11,7 @@ export function createMessageGroup(
   user: string,
   messages?: PersMessage[]
 ): PersMessageGroup {
-  if (messages?.find((a) => a.userId !== user)) {
+  if (messages?.find((a) => a.user_id !== user)) {
     throw new Error(
       'Trying to create a message group with messages from multiple users'
     );
@@ -19,50 +19,50 @@ export function createMessageGroup(
 
   return {
     id: uuid(),
-    userId: user,
+    user_id: user,
     messages: messages ?? [],
   };
 }
 
 export function getGroupsEarliestMessage(
-  messageGroup: PersMessageGroup
+  message_group: PersMessageGroup
 ): PersMessage {
-  return messageGroup.messages[0];
+  return message_group.messages[0];
 }
 
 export function getGroupsLatestMessage(
-  messageGroup: PersMessageGroup
+  message_group: PersMessageGroup
 ): PersMessage {
-  const messagesCount = messageGroup.messages.length;
-  return messageGroup.messages[messagesCount - 1];
+  const messages_count = message_group.messages.length;
+  return message_group.messages[messages_count - 1];
 }
 
 export function getGroupsLatestMessageTime(
-  messageGroup: PersMessageGroup
+  message_group: PersMessageGroup
 ): Date {
-  return getGroupsLatestMessage(messageGroup).time;
+  return getGroupsLatestMessage(message_group).time;
 }
 
 export function getGroupsEarliestMessageTime(
-  messageGroup: PersMessageGroup
+  message_group: PersMessageGroup
 ): Date {
-  return getGroupsEarliestMessage(messageGroup).time;
+  return getGroupsEarliestMessage(message_group).time;
 }
 
 export function insertMessageInGroup(
-  messageGroup: PersMessageGroup,
-  messageToInsert: PersMessage
+  message_group: PersMessageGroup,
+  message_to_insert: PersMessage
 ): PersMessageGroup {
-  const messages = messageGroup.messages;
+  const messages = message_group.messages;
   for (let i = 0; i < messages.length; i++) {
     const existingMessage = messages[i];
 
-    if (existingMessage.time > messageToInsert.time) {
-      messageGroup.messages.splice(i, 0, messageToInsert);
-      return messageGroup;
+    if (existingMessage.time > message_to_insert.time) {
+      message_group.messages.splice(i, 0, message_to_insert);
+      return message_group;
     }
   }
 
-  messageGroup.messages.push(messageToInsert);
-  return messageGroup;
+  message_group.messages.push(message_to_insert);
+  return message_group;
 }

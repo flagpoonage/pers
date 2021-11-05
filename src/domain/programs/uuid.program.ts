@@ -1,11 +1,11 @@
 import { PersProgramGenerator } from '../program';
-import { v4 as uuid } from 'uuid';
+import { v4 as generateUuid } from 'uuid';
 
-export async function* createUuid(): PersProgramGenerator {
+export async function* uuid(): PersProgramGenerator {
   let countStr = yield {
     message: 'How many UUIDs do you want to generate?',
-    isValidYield: true,
-    nextEntryOptions: {
+    is_valid_yield: true,
+    next_entry_options: {
       mask: false,
       label: 'UUID Count',
     },
@@ -16,8 +16,8 @@ export async function* createUuid(): PersProgramGenerator {
   while (isNaN(Number(count))) {
     countStr = yield {
       message: 'Please enter a number of UUIDs to generate',
-      isValidYield: false,
-      nextEntryOptions: {
+      is_valid_yield: false,
+      next_entry_options: {
         mask: false,
         label: 'UUID Count',
       },
@@ -29,13 +29,13 @@ export async function* createUuid(): PersProgramGenerator {
   const uuids: string[] = [];
 
   for (let i = 0; i < count; i++) {
-    uuids.push(uuid());
+    uuids.push(generateUuid());
   }
 
   const message = `Generated ${count} UUIDs:\n\n${uuids.join('\n')}`;
 
   return {
     message,
-    isValidYield: true,
+    is_valid_yield: true,
   };
 }

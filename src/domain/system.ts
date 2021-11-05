@@ -1,9 +1,15 @@
-import { OtherUser } from './user';
+import { User } from './user';
 
-export const SystemUser: OtherUser = {
-  userName: 'System',
-  userColor: '#ff5050',
-  userId: 'system',
+export const SystemUser: User = {
+  username: 'System',
+  user_color: '#ff5050',
+  user_id: 'system',
+};
+
+export const LocalUser: User = {
+  username: 'Anonymous',
+  user_color: 'lime',
+  user_id: 'local',
 };
 
 export function getSystemIntroductionText() {

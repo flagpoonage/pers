@@ -1,4 +1,5 @@
-import { PersController, setSelfUserProperties } from '../controller';
+import { setMyDisplayColor } from '../agents/display.agent';
+import { PersController } from '../controller';
 import { PersProgramGenerator } from '../program';
 import { isValidColor } from './program-utils';
 
@@ -7,20 +8,20 @@ export async function* setColor(
 ): PersProgramGenerator {
   let color = yield {
     message: 'Please choose a colour for the your own user messages',
-    isValidYield: true,
+    is_valid_yield: true,
   };
 
   while (!isValidColor(color)) {
     color = yield {
       message: 'Colour is invalid, please choose another colour',
-      isValidYield: false,
+      is_valid_yield: false,
     };
   }
 
-  setSelfUserProperties(controller, { userColor: color });
+  setMyDisplayColor(controller, color);
 
   return {
-    message: `Your display colour is set to ${color}`,
-    isValidYield: true,
+    message: null,
+    is_valid_yield: true,
   };
 }

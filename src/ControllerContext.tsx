@@ -2,9 +2,32 @@ import React, {
   useCallback,
   useContext,
   useEffect,
+  useMemo,
   useRef,
   useState,
 } from 'react';
+import {
+  DisplayAgentName,
+  DisplayAgentState,
+  getDefaultDisplayAgentState,
+  unwatchDisplayAgentState,
+  watchDisplayAgentState,
+} from './domain/agents/display.agent';
+import {
+  getCurrentUser,
+  getDefaultRemoteServerAgentState,
+  RemoteServerAgentName,
+  RemoteServerAgentState,
+  unwatchRemoteServerAgentState,
+  watchRemoteServerAgentState,
+} from './domain/agents/remote-server.agent';
+import {
+  getDefaultUsersAgentState,
+  unwatchUsersAgentState,
+  UsersAgentName,
+  UsersAgentState,
+  watchUsersAgentState,
+} from './domain/agents/users.agent';
 import {
   PersController,
   createController,
@@ -19,7 +42,9 @@ import {
   PersConversation,
   removeConversationChangeListener,
 } from './domain/conversation';
+import { EmitterHandler } from './domain/emitter';
 import { PersMessageGroup } from './domain/message-group';
+import { LocalUser } from './domain/system';
 
 const ControllerContext = React.createContext<PersController | null>(null);
 
@@ -29,7 +54,9 @@ export function ControllerProvider({
   const controller = useRef(createController());
 
   useEffect(() => {
-    startAgent(controller.current, 'remote-server');
+    startAgent(controller.current, RemoteServerAgentName);
+    startAgent(controller.current, DisplayAgentName);
+    startAgent(controller.current, UsersAgentName);
   }, []);
 
   return (
@@ -50,7 +77,11 @@ export function useController() {
 
   const sendMessage = useCallback(
     (message: string) => {
-      sendMessageToController(controller, message);
+      sendMessageToController(
+        controller,
+        message,
+        getCurrentUser(controller).user_id
+      );
     },
     [controller]
   );
@@ -71,9 +102,14 @@ export function useCurrentConversation() {
 
   const sendMessage = useCallback(
     (message: string) => {
-      currentConversation && sendMessageToController(controller, message);
+      currentConversation &&
+        sendMessageToController(
+          controller,
+          message,
+          getCurrentUser(controller).user_id
+        );
     },
-    [currentConversation]
+    [controller, currentConversation]
   );
 
   useEffect(() => {
@@ -113,40 +149,100 @@ export function useCurrentConversationMessageGroups() {
   return messageGroups;
 }
 
-export function useAvailableUsers() {
+// export function useAvailableUsers() {
+//   const { controller } = useController();
+//   const [users, setUsers] = useState(controller.users);
+
+//   useEffect(() => {
+//     const handler = (controller: PersController) =>
+//       setUsers(new Map(controller.users));
+
+//     watchControllerEvent(controller, 'change_users', handler);
+
+//     return () => {
+//       unwatchControllerEvent(controller, 'change_users', handler);
+//     };
+//   }, [controller]);
+
+//   return users;
+// }
+
+export function useStateValue<I, O>(
+  attachListener: (
+    controller: PersController,
+    handler: EmitterHandler<I>
+  ) => void,
+  removeListener: (
+    controller: PersController,
+    handler: EmitterHandler<I>
+  ) => void,
+  selectorFn: (state: I) => O,
+  initialValue: I
+) {
+  const selector = useRef(selectorFn);
   const { controller } = useController();
-  const [users, setUsers] = useState(controller.users);
+  const initValue = useRef(initialValue);
+  const [selectedState, setSelectedState] = useState<O>(
+    selector.current(initValue.current)
+  );
 
   useEffect(() => {
-    const handler = (controller: PersController) =>
-      setUsers(new Map(controller.users));
+    const handler = (state: I) => {
+      setSelectedState(
+        selector.current(state === null ? initValue.current : state)
+      );
+    };
 
-    watchControllerEvent(controller, 'change_users', handler);
+    attachListener(controller, handler);
 
     return () => {
-      unwatchControllerEvent(controller, 'change_users', handler);
+      removeListener(controller, handler);
     };
-  }, [controller]);
+  }, [attachListener, removeListener, controller]);
 
-  return users;
+  return selectedState;
 }
 
-export function useCommandColor() {
-  const { controller } = useController();
-  const [commandColor, setCommandColor] = useState(controller.commandColor);
+export function useUsersState<T>(selectorFn: (state: UsersAgentState) => T) {
+  return useStateValue(
+    watchUsersAgentState,
+    unwatchUsersAgentState,
+    selectorFn,
+    getDefaultUsersAgentState()
+  );
+}
 
-  useEffect(() => {
-    const handler = (controller: PersController) =>
-      setCommandColor(controller.commandColor);
+export function useDisplayState<T>(
+  selectorFn: (state: DisplayAgentState) => T
+) {
+  return useStateValue(
+    watchDisplayAgentState,
+    unwatchDisplayAgentState,
+    selectorFn,
+    getDefaultDisplayAgentState()
+  );
+}
 
-    watchControllerEvent(controller, 'change_command_color', handler);
+export function useRemoteServerState<T>(
+  selectorFn: (state: RemoteServerAgentState) => T
+) {
+  return useStateValue(
+    watchRemoteServerAgentState,
+    unwatchRemoteServerAgentState,
+    selectorFn,
+    getDefaultRemoteServerAgentState()
+  );
+}
 
-    return () => {
-      unwatchControllerEvent(controller, 'change_command_color', handler);
-    };
-  }, [controller]);
+export function useCurrentUser() {
+  const current_user_id = useRemoteServerState(
+    (state) => state.authentication?.user_id
+  );
+  const users = useUsersState((state) => state.users);
 
-  return commandColor;
+  const current_user = current_user_id ? users.get(current_user_id) : undefined;
+
+  return current_user ?? LocalUser;
 }
 
 export function useCommandEntryOptions() {
@@ -167,22 +263,4 @@ export function useCommandEntryOptions() {
   }, [controller]);
 
   return commandEntryOptions;
-}
-
-export function useSelf() {
-  const { controller } = useController();
-  const [self, setSelf] = useState(controller.currentUser);
-
-  useEffect(() => {
-    const handler = (controller: PersController) =>
-      setSelf({ ...controller.currentUser });
-
-    watchControllerEvent(controller, 'change_self', handler);
-
-    return () => {
-      unwatchControllerEvent(controller, 'change_self', handler);
-    };
-  }, [controller]);
-
-  return self;
 }

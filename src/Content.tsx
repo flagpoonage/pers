@@ -1,17 +1,24 @@
 import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { formatMessageTime } from './domain/message';
 import {
-  useAvailableUsers,
-  useCommandColor,
+  useController,
   useCurrentConversationMessageGroups,
-  useSelf,
+  useDisplayState,
+  useUsersState,
 } from './ControllerContext';
+import { getCurrentUser } from './domain/agents/remote-server.agent';
+import { SystemUser } from './domain/system';
 
 export function Content() {
+  const { controller } = useController();
   const messageGroups = useCurrentConversationMessageGroups();
-  const commandColor = useCommandColor();
-  const users = useAvailableUsers();
-  const self = useSelf();
+
+  const cmd_color = useDisplayState((state) => state.cmd_color);
+  const sys_color = useDisplayState((state) => state.sys_color);
+  const my_color = useDisplayState((state) => state.my_color);
+
+  const users = useUsersState((state) => state.users);
+  const self = getCurrentUser(controller);
 
   const isMaximumScroll = useRef(true);
 
@@ -77,20 +84,22 @@ export function Content() {
         <div ref={contentRef}>
           {messageGroups.map((group) => {
             const user =
-              group.userId === self.userId ? self : users.get(group.userId);
+              group.user_id === self.user_id ? self : users.get(group.user_id);
+
+            const user_color =
+              group.user_id === self.user_id
+                ? my_color
+                : group.user_id === SystemUser.user_id
+                ? sys_color
+                : users.get(group.user_id)?.user_color ?? 'white';
+
             return (
               <div key={group.id} className={`pad-y2 clr-white-d5`}>
                 <div
-                  className={`no-shrink no-grow w-14 ${
-                    group.userId === self.userId ? 'clr-trim' : ''
-                  } ellipsis`}
-                  style={
-                    group.userId === self.userId
-                      ? { color: self.userColor }
-                      : { color: users.get(group.userId)?.userColor }
-                  }
+                  className={`no-shrink no-grow w-14 ellipsis`}
+                  style={{ color: user_color }}
                 >
-                  {user?.userName}
+                  {user?.username}
                 </div>
                 {group.messages.map((message) => (
                   <div key={message.id} className="flex row">
@@ -100,10 +109,8 @@ export function Content() {
                     <div
                       className="message-margin pad-l ws-preserve"
                       style={{
-                        borderLeft: `dashed 1px ${
-                          user?.userColor ?? 'transparent'
-                        }`,
-                        color: message.isCommand ? commandColor : 'inherit',
+                        borderLeft: `dashed 1px ${user_color ?? 'transparent'}`,
+                        color: message.is_command ? cmd_color : 'inherit',
                       }}
                     >
                       {message.message}

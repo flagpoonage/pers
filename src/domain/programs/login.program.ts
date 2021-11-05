@@ -1,4 +1,5 @@
 import {
+  connect,
   getRemoteServerAgentState,
   RemoteServerAgentName,
 } from '../agents/remote-server.agent';
@@ -6,25 +7,21 @@ import { PersController } from '../controller';
 import { PersProgramGenerator } from '../program';
 import { getJsonErrorMessage, JsonError, postJsonHttp } from './program-utils';
 
-interface ExpectedRegistrationResult {
+interface ExpectedLoginResult {
   type: 'success';
   data: {
-    message: string;
     user_id: string;
-    username: string;
-    created_at: number;
-    updated_at: number;
+    access_token: string;
+    refresh_token: string;
   };
 }
 
-interface RegistrationInput {
+interface LoginInput {
   username: string;
   password: string;
 }
 
-export async function* register(
-  controller: PersController
-): PersProgramGenerator {
+export async function* login(controller: PersController): PersProgramGenerator {
   const agent_state = getRemoteServerAgentState(controller);
 
   if (!agent_state) {
@@ -37,14 +34,13 @@ export async function* register(
   if (!agent_state.host_settings) {
     return {
       message:
-        'You must be connected to a server before you can register. Run the `set-svr` command to connect.',
+        'You must be connected to a server before you can login. Run the `set-svr` command to connect.',
       is_valid_yield: true,
     };
   }
 
   const username = yield {
-    message:
-      'Enter a new username. Your username should consistent of uppercase and lowercase letters, numbers from 0 to 9, as well as _ and - characters.',
+    message: 'Enter your username',
     is_valid_yield: true,
     next_entry_options: {
       mask: false,
@@ -53,8 +49,7 @@ export async function* register(
   };
 
   const password = yield {
-    message:
-      'Enter a new password. Your password must be at least 16 characters long.',
+    message: 'Enter your password',
     is_valid_yield: true,
     next_entry_options: {
       mask: true,
@@ -63,17 +58,19 @@ export async function* register(
   };
 
   try {
-    await postJsonHttp<RegistrationInput, ExpectedRegistrationResult>(
-      `${agent_state.host_settings.api}/register`,
+    const result = await postJsonHttp<LoginInput, ExpectedLoginResult>(
+      `${agent_state.host_settings.api}/login`,
       {
         username,
         password,
       }
     );
 
+    connect(controller, result.data);
+
     return {
       message:
-        'Registration was successful. Please use the login command to log in to your account',
+        'Login was successful. Please use the login command to log in to your account',
       is_valid_yield: true,
     };
   } catch (exception) {

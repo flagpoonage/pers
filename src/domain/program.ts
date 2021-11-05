@@ -18,9 +18,9 @@ export interface CommandEntryOptions {
 }
 
 export interface ProgramOutput {
-  message: string;
-  isValidYield: boolean;
-  nextEntryOptions?: CommandEntryOptions;
+  message: string | null;
+  is_valid_yield: boolean;
+  next_entry_options?: CommandEntryOptions;
 }
 
 export function createDefaultCommandEntryOptions() {

@@ -10,17 +10,10 @@ export async function clear(
 ): Promise<ProgramOutput> {
   const conversation = getCurrentConversationFromController(controller);
 
-  if (!conversation) {
-    return {
-      message: 'Unable to find current conversation',
-      isValidYield: true,
-    };
-  }
-
   clearConversation(conversation);
 
   return {
     message: 'Conversation cleared',
-    isValidYield: true,
+    is_valid_yield: true,
   };
 }

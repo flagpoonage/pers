@@ -3,8 +3,8 @@ import { PersProgramGenerator } from '../program';
 export async function* prettyJson(): PersProgramGenerator {
   const content = yield {
     message: 'Enter your JSON content',
-    isValidYield: true,
-    nextEntryOptions: {
+    is_valid_yield: true,
+    next_entry_options: {
       mask: false,
       label: 'JSON Content',
     },
@@ -15,12 +15,12 @@ export async function* prettyJson(): PersProgramGenerator {
     const output = JSON.stringify(result, null, 2);
     return {
       message: `JSON Output:\n\n${output}`,
-      isValidYield: true,
+      is_valid_yield: true,
     };
   } catch (exception) {
     return {
       message: 'Invalid JSON, could not be parsed',
-      isValidYield: true,
+      is_valid_yield: true,
     };
   }
 }

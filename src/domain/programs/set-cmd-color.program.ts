@@ -1,4 +1,5 @@
-import { PersController, setCommandColor } from '../controller';
+import { setCommandColor } from '../agents/display.agent';
+import { PersController } from '../controller';
 import { PersProgramGenerator } from '../program';
 import { isValidColor } from './program-utils';
 
@@ -7,20 +8,20 @@ export async function* setCmdColor(
 ): PersProgramGenerator {
   let color = yield {
     message: 'Please choose a colour for the system user',
-    isValidYield: true,
+    is_valid_yield: true,
   };
 
   while (!isValidColor(color)) {
     color = yield {
       message: 'Colour is invalid, please choose another colour',
-      isValidYield: false,
+      is_valid_yield: false,
     };
   }
 
   setCommandColor(controller, color);
 
   return {
-    message: `Command colour is set to ${color}`,
-    isValidYield: true,
+    message: null,
+    is_valid_yield: true,
   };
 }

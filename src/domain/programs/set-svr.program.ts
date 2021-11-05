@@ -1,8 +1,10 @@
 import {
+  changeServer,
+  getRemoteServerAgentState,
+} from '../agents/remote-server.agent';
+import {
   getCurrentConversationFromController,
-  isUserAuthenticated,
   PersController,
-  sendCommandToAgent,
 } from '../controller';
 import { insertMessageInConversation } from '../conversation';
 import { createMessage } from '../message';
@@ -21,25 +23,19 @@ export async function* setServer(
   controller: PersController
 ): PersProgramGenerator {
   const conversation = getCurrentConversationFromController(controller);
+  const remote_server_state = getRemoteServerAgentState(controller);
 
-  if (!conversation) {
-    return {
-      message: 'Unable to load current conversation',
-      isValidYield: true,
-    };
-  }
-
-  if (isUserAuthenticated(controller)) {
+  if (remote_server_state && remote_server_state.authentication) {
     return {
       message: 'You must logout before you can connect to a different server',
-      isValidYield: true,
+      is_valid_yield: true,
     };
   }
 
   const serverAddress = yield {
     message: 'Enter the server domain that you want to connect to',
-    isValidYield: true,
-    nextEntryOptions: {
+    is_valid_yield: true,
+    next_entry_options: {
       mask: false,
       label: 'Server domain',
     },
@@ -47,7 +43,7 @@ export async function* setServer(
 
   insertMessageInConversation(
     conversation,
-    createMessage(SystemUser.userId, 'Fetching server metadata...')
+    createMessage(SystemUser.user_id, 'Fetching server metadata...')
   );
 
   try {
@@ -56,26 +52,24 @@ export async function* setServer(
       `http://${serverAddress}/info`
     );
 
-    sendCommandToAgent(
-      controller,
-      conversation,
-      `remote-server change-server ${result.data.api_host} ${result.data.socket_host}`
-    );
+    changeServer(controller, {
+      ...result.data,
+    });
 
     return {
       message: `Server changed successfully:\n\nAPI host: ${result.data.api_host}\nSocket host: ${result.data.socket_host}`,
-      isValidYield: true,
+      is_valid_yield: true,
     };
   } catch (exception) {
     if (exception instanceof JsonError) {
       return {
         message: getJsonErrorMessage(exception),
-        isValidYield: true,
+        is_valid_yield: true,
       };
     } else {
       return {
         message: `Unable to fetch server connection information..\n\n${exception}`,
-        isValidYield: true,
+        is_valid_yield: true,
       };
     }
   }

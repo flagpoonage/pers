@@ -865,6 +865,11 @@ escape-string-regexp@^4.0.0:
   resolved "https://registry.yarnpkg.com/escape-string-regexp/-/escape-string-regexp-4.0.0.tgz#14ba83a5d373e3d311e5afca29cf5bfad965bf34"
   integrity sha512-TtpcNJ3XAzx3Gq8sWRzJaVajRs0uVxA2YAkdb1jm2YkPz4G6egUFAyA3n5vtEIZefPk5Wa4UXbKuS5fKkJWdgA==
 
+eslint-plugin-react-hooks@^4.2.1-alpha-13455d26d-20211104:
+  version "4.2.1-alpha-13455d26d-20211104"
+  resolved "https://registry.yarnpkg.com/eslint-plugin-react-hooks/-/eslint-plugin-react-hooks-4.2.1-alpha-13455d26d-20211104.tgz#08c10a0897c7316ff703caf22a94506b7f2655b8"
+  integrity sha512-FbqwbpOYRs1t7Kwy2Lw+HbWjVTdyMTI3MCiU5s+86WxqqLIMbDLJB/FlfKBQVcuJZUeEANrQF7JM7YbAOyOJQQ==
+
 eslint-plugin-react@^7.26.1:
   version "7.26.1"
   resolved "https://registry.yarnpkg.com/eslint-plugin-react/-/eslint-plugin-react-7.26.1.tgz#41bcfe3e39e6a5ac040971c1af94437c80daa40e"

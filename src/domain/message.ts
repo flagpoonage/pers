@@ -3,10 +3,10 @@ import { format } from 'date-fns';
 
 export interface PersMessage {
   id: string;
-  userId: string;
+  user_id: string;
   message: string;
   time: Date;
-  isCommand: boolean;
+  is_command: boolean;
 }
 
 export function createMessage(
@@ -17,9 +17,9 @@ export function createMessage(
   return {
     id: uuid(),
     time: new Date(),
-    userId,
+    user_id: userId,
     message,
-    isCommand,
+    is_command: isCommand,
   };
 }
 

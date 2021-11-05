@@ -12,8 +12,8 @@ import {
 } from './emitter';
 import { createMessage } from './message';
 import { getSystemIntroductionText, SystemUser } from './system';
-import { BaseUser, OtherUser, SelfUser } from './user';
-import { v4 as uuid } from 'uuid';
+import { User } from './user';
+import { v4 as generateUuid } from 'uuid';
 import {
   CommandEntryOptions,
   createDefaultCommandEntryOptions,
@@ -24,7 +24,7 @@ import {
 import { setColor } from './programs/set-color.program';
 import { setCmdColor } from './programs/set-cmd-color.program';
 import { setSysColor } from './programs/set-sys-color.program';
-import { createUuid } from './programs/uuid.program';
+import { uuid } from './programs/uuid.program';
 import { epoch } from './programs/epoch.program';
 import { prettyJson } from './programs/pretty-json.program';
 import { dateFmt } from './programs/date-fmt.program';
@@ -32,17 +32,16 @@ import { clear } from './programs/clear.program';
 import { intro } from './programs/intro.program';
 import { register } from './programs/register.program';
 import { setServer } from './programs/set-svr.program';
-import {
-  remoteServerAgent,
-  PersAgentGenerator,
-} from './agents/remote-server.agent';
+import { createRemoteServerAgentController } from './agents/remote-server.agent';
+import { login } from './programs/login.program';
+import { PersAgentController } from './agent';
+import { createDisplayAgentController } from './agents/display.agent';
+import { createUsersAgentController } from './agents/users.agent';
 
 export interface PersController {
-  currentUser: SelfUser;
   conversations: Map<string, PersConversation>;
+  systemConversation: PersConversation;
   currentConversation: string;
-  commandColor: string;
-  users: Map<string, OtherUser>;
   emitter: Emitter<PersController>;
   programs: Record<string, PersProgram | PersCommand>;
   commandExecution: PersProgramGenerator | null;
@@ -51,19 +50,11 @@ export interface PersController {
   agents: Map<string, PersAgentController>;
 }
 
-export interface PersAgentController {
-  name: string;
-  init: (controller: PersController) => PersAgentGenerator;
-  executor: PersAgentGenerator | null;
-  state: unknown;
-}
-
-export function createSelfUser(): SelfUser {
+export function createSelfUser(): User {
   return {
-    userName: 'Anonymous',
-    userColor: 'lime',
-    authenticated: false,
-    userId: uuid(),
+    username: 'Anonymous',
+    user_color: 'lime',
+    user_id: generateUuid(),
   };
 }
 
@@ -75,60 +66,44 @@ export function triggerChange(controller: PersController, key: string) {
   }
 }
 
-export function isUserAuthenticated(controller: PersController) {
-  return controller.currentUser.authenticated;
-}
+// export function triggerSelfChange(controller: PersController) {
+//   triggerChange(controller, 'change_self');
+// }
 
-export function triggerSelfChange(controller: PersController) {
-  triggerChange(controller, 'change_self');
-}
+// export function triggerUsersChange(controller: PersController) {
+//   triggerChange(controller, 'change_users');
+// }
 
-export function triggerUsersChange(controller: PersController) {
-  triggerChange(controller, 'change_users');
-}
-
-export function triggerCommandColorChange(controller: PersController) {
-  triggerChange(controller, 'change_command_color');
-}
+// export function triggerCommandColorChange(controller: PersController) {
+//   triggerChange(controller, 'change_command_color');
+// }
 
 export function triggerCommandEntryChange(controller: PersController) {
   triggerChange(controller, 'change_command_entry');
 }
 
-export function setCommandColor(controller: PersController, color: string) {
-  controller.commandColor = color;
-  triggerCommandColorChange(controller);
-}
+// export function setCommandColor(controller: PersController, color: string) {
+//   controller.commandColor = color;
+//   triggerCommandColorChange(controller);
+// }
 
-export function setSelfUserProperties(
-  controller: PersController,
-  data: Partial<BaseUser>
-) {
-  controller.currentUser = {
-    ...controller.currentUser,
-    ...data,
-  };
+// export function setSystemUserProperties(
+//   controller: PersController,
+//   data: Partial<BaseUser>
+// ) {
+//   const systemUser = controller.users.get(SystemUser.user_id);
 
-  triggerSelfChange(controller);
-}
+//   if (!systemUser) {
+//     throw new Error('Unable to find system user');
+//   }
 
-export function setSystemUserProperties(
-  controller: PersController,
-  data: Partial<BaseUser>
-) {
-  const systemUser = controller.users.get(SystemUser.userId);
+//   controller.users.set(SystemUser.user_id, {
+//     ...systemUser,
+//     ...data,
+//   });
 
-  if (!systemUser) {
-    throw new Error('Unable to find system user');
-  }
-
-  controller.users.set(SystemUser.userId, {
-    ...systemUser,
-    ...data,
-  });
-
-  triggerUsersChange(controller);
-}
+//   triggerUsersChange(controller);
+// }
 
 export function createRootConversation(
   includeIntro: boolean
@@ -151,13 +126,13 @@ export function createController(): PersController {
 
   return {
     agents: createDefaultAgents(),
-    currentUser: createSelfUser(),
     conversations: new Map<string, PersConversation>([
       [rootConversation.id, rootConversation],
     ]),
+    systemConversation: rootConversation,
     currentConversation: rootConversation.id,
-    users: new Map<string, OtherUser>([[SystemUser.userId, SystemUser]]),
-    commandColor: '#00cfff',
+    // users: new Map<string, User>([[SystemUser.user_id, SystemUser]]),
+    // commandColor: '#00cfff',
     commandExecution: null,
     emitter: createEmitter(),
     commandEntryOptions: createDefaultCommandEntryOptions(),
@@ -167,32 +142,31 @@ export function createController(): PersController {
 }
 
 export function createDefaultAgents(): Map<string, PersAgentController> {
+  const remoteServerAgent = createRemoteServerAgentController();
+  const displayAgent = createDisplayAgentController();
+  const usersAgent = createUsersAgentController();
+
   return new Map([
-    [
-      'remote-server',
-      {
-        name: 'remote-server',
-        init: remoteServerAgent,
-        executor: null,
-        state: null,
-      },
-    ],
+    [remoteServerAgent.name, remoteServerAgent as PersAgentController<unknown>],
+    [displayAgent.name, displayAgent as PersAgentController<unknown>],
+    [usersAgent.name, usersAgent as PersAgentController<unknown>],
   ]);
 }
 
 export function createDefaultPrograms() {
   return {
-    uuid: createUuid,
     'set-clr': setColor,
     'set-sys-clr': setSysColor,
     'set-cmd-clr': setCmdColor,
     'pretty-json': prettyJson,
-    epoch: epoch,
-    'date-fmt': dateFmt,
-    clear: clear,
-    register: register,
-    intro: intro,
     'set-svr': setServer,
+    'date-fmt': dateFmt,
+    clear,
+    register,
+    login,
+    intro,
+    epoch,
+    uuid,
   };
 }
 
@@ -222,30 +196,35 @@ export function getConversationFromController(
 export function getCurrentConversationFromController(
   controller: PersController
 ) {
-  return getConversationFromController(
+  const current_conversation = getConversationFromController(
     controller,
     controller.currentConversation
   );
+
+  if (!current_conversation) {
+    console.error(
+      'Unable to find current conversation, defaulting to system conversation'
+    );
+    return controller.systemConversation;
+  }
+
+  return current_conversation;
 }
 
 export function startAgent(controller: PersController, agentName: string) {
-  const conversation = getCurrentConversationFromController(controller);
-
-  if (!conversation) {
-    throw new Error('Unable to start agent, cannot find conversation');
-  }
-
-  sendCommandToAgent(controller, conversation, `${agentName} start`);
+  sendCommandToAgent(
+    controller,
+    getCurrentConversationFromController(controller),
+    `${agentName} start`
+  );
 }
 
 export function stopAgent(controller: PersController, agentName: string) {
-  const conversation = getCurrentConversationFromController(controller);
-
-  if (!conversation) {
-    throw new Error('Unable to start agent, cannot find conversation');
-  }
-
-  sendCommandToAgent(controller, conversation, `${agentName} start`);
+  sendCommandToAgent(
+    controller,
+    getCurrentConversationFromController(controller),
+    `${agentName} start`
+  );
 }
 
 export function isAgentRunning(controller: PersController, agent_name: string) {
@@ -254,7 +233,7 @@ export function isAgentRunning(controller: PersController, agent_name: string) {
 }
 
 export function getAgentState(controller: PersController, agent_name: string) {
-  const agent = getAgent(controller, agent_name);
+  const agent = maybeGetAgent(controller, agent_name);
 
   if (!agent) {
     return;
@@ -263,22 +242,15 @@ export function getAgentState(controller: PersController, agent_name: string) {
   return agent.state;
 }
 
-export function getAgent(controller: PersController, agent_name: string) {
-  return controller.agents.get(agent_name);
-}
-
 export async function sendMessageToController(
   controller: PersController,
-  message: string
+  message: string,
+  from_id: string
 ) {
   if (message.trim().length === 0) {
     return;
   }
   const conversation = getCurrentConversationFromController(controller);
-
-  if (!conversation) {
-    throw new Error('Unable to send message, cannot find conversation');
-  }
 
   const isCommandMode =
     conversation.type === 'command' || !!controller.commandExecution;
@@ -300,15 +272,12 @@ export async function sendMessageToController(
 
     insertMessageInConversation(
       conversation,
-      createMessage(SystemUser.userId, displayValue, true)
+      createMessage(SystemUser.user_id, displayValue, true)
     );
 
     sendCommandToController(controller, conversation, command);
   } else {
-    insertMessageInConversation(
-      conversation,
-      createMessage(controller.currentUser.userId, message)
-    );
+    insertMessageInConversation(conversation, createMessage(from_id, message));
   }
 }
 
@@ -345,17 +314,19 @@ export async function continueProgramExecution(
 ) {
   const { done, value } = await currentProgram.next(command);
 
-  insertMessageInConversation(
-    conversation,
-    createMessage(SystemUser.userId, value.message)
-  );
+  if (value.message) {
+    insertMessageInConversation(
+      conversation,
+      createMessage(SystemUser.user_id, value.message)
+    );
+  }
 
   if (done) {
     controller.commandExecution = null;
     controller.commandEntryOptions = createDefaultCommandEntryOptions();
   } else {
     controller.commandEntryOptions =
-      value.nextEntryOptions ?? createDefaultCommandEntryOptions();
+      value.next_entry_options ?? createDefaultCommandEntryOptions();
   }
 
   return triggerCommandEntryChange(controller);
@@ -391,7 +362,7 @@ export async function sendCommandToController(
     insertMessageInConversation(
       conversation,
       createMessage(
-        SystemUser.userId,
+        SystemUser.user_id,
         "Invalid command. Type 'commands' for a list of available commands"
       )
     );
@@ -404,10 +375,12 @@ export async function sendCommandToController(
   if ('then' in programIteration) {
     const { message } = await programIteration;
 
-    insertMessageInConversation(
-      conversation,
-      createMessage(SystemUser.userId, message)
-    );
+    if (message) {
+      insertMessageInConversation(
+        conversation,
+        createMessage(SystemUser.user_id, message)
+      );
+    }
     return;
   }
 
@@ -432,21 +405,23 @@ export async function sendCommandToController(
 
     if (
       done ||
-      !value.isValidYield ||
+      !value.is_valid_yield ||
       !nextArgument ||
-      value.nextEntryOptions?.mask
+      value.next_entry_options?.mask
     ) {
-      insertMessageInConversation(
-        conversation,
-        createMessage(SystemUser.userId, value.message)
-      );
+      if (value.message) {
+        insertMessageInConversation(
+          conversation,
+          createMessage(SystemUser.user_id, value.message)
+        );
+      }
 
       if (done) {
         controller.commandExecution = null;
         controller.commandEntryOptions = createDefaultCommandEntryOptions();
       } else {
         controller.commandEntryOptions =
-          value.nextEntryOptions ?? createDefaultCommandEntryOptions();
+          value.next_entry_options ?? createDefaultCommandEntryOptions();
       }
 
       triggerCommandEntryChange(controller);
@@ -457,6 +432,26 @@ export async function sendCommandToController(
     (executionArgs.length > 0 || !!nextArgument) &&
     !controller.commandEntryOptions.mask
   );
+}
+
+export function getAgent(
+  controller: PersController,
+  agent_name: string
+): PersAgentController {
+  const agent = maybeGetAgent(controller, agent_name);
+
+  if (!agent) {
+    throw new Error(`Agent '${agent_name}'' is missing from the controller`);
+  }
+
+  return agent;
+}
+
+export function maybeGetAgent(
+  controller: PersController,
+  agent_name: string
+): PersAgentController | undefined {
+  return controller.agents.get(agent_name);
 }
 
 export async function sendCommandToAgent(
@@ -472,7 +467,7 @@ export async function sendCommandToAgent(
     return insertMessageInConversation(
       conversation,
       createMessage(
-        SystemUser.userId,
+        SystemUser.user_id,
         `Unrecognized agent name [${agentName}]. You may need to load the agent manually`
       )
     );
@@ -485,14 +480,14 @@ export async function sendCommandToAgent(
       return insertMessageInConversation(
         conversation,
         createMessage(
-          SystemUser.userId,
+          SystemUser.user_id,
           `Agent [${agentName}] is already running.`
         )
       );
     } else {
       insertMessageInConversation(
         conversation,
-        createMessage(SystemUser.userId, `Starting agent [${agentName}]...`)
+        createMessage(SystemUser.user_id, `Starting agent [${agentName}]...`)
       );
 
       agent.executor = agent.init(controller);
@@ -505,7 +500,7 @@ export async function sendCommandToAgent(
         insertMessageInConversation(
           conversation,
           createMessage(
-            SystemUser.userId,
+            SystemUser.user_id,
             `[${agent.name}] - ${agent_response.value.message}`
           )
         );
@@ -517,6 +512,12 @@ export async function sendCommandToAgent(
         agent.state = null;
       } else {
         agent.state = agent_response.value.state;
+
+        if (agent.state !== agent_response.value.state) {
+          agent.emitter.handlers
+            .get('state-change')
+            ?.forEach((h) => h(agent.state));
+        }
       }
     }
   } else if (agentCommand === 'stop') {
@@ -524,14 +525,14 @@ export async function sendCommandToAgent(
       return insertMessageInConversation(
         conversation,
         createMessage(
-          SystemUser.userId,
+          SystemUser.user_id,
           `Agent [${agentName}] is already stopped.`
         )
       );
     } else {
       insertMessageInConversation(
         conversation,
-        createMessage(SystemUser.userId, `Stopping agent [${agentName}]...`)
+        createMessage(SystemUser.user_id, `Stopping agent [${agentName}]...`)
       );
 
       const agent_response = await agent.executor.next([
@@ -543,7 +544,7 @@ export async function sendCommandToAgent(
         insertMessageInConversation(
           conversation,
           createMessage(
-            SystemUser.userId,
+            SystemUser.user_id,
             `[${agent.name}] - ${agent_response.value.message}`
           )
         );
@@ -551,6 +552,10 @@ export async function sendCommandToAgent(
 
       agent.executor = null;
       agent.state = null;
+
+      agent.emitter.handlers
+        .get('state-change')
+        ?.forEach((h) => h(agent.state));
     }
   } else if (agent.executor) {
     const agent_response = await agent.executor.next([
@@ -562,7 +567,7 @@ export async function sendCommandToAgent(
       insertMessageInConversation(
         conversation,
         createMessage(
-          SystemUser.userId,
+          SystemUser.user_id,
           `[${agent.name}] - ${agent_response.value.message}`
         )
       );
@@ -574,11 +579,13 @@ export async function sendCommandToAgent(
     } else {
       agent.state = agent_response.value.state;
     }
+
+    agent.emitter.handlers.get('state-change')?.forEach((h) => h(agent.state));
   } else {
     return insertMessageInConversation(
       conversation,
       createMessage(
-        SystemUser.userId,
+        SystemUser.user_id,
         `Command [${agentCommand}] could not be sent. Agent [${agentName}] is stopped`
       )
     );
@@ -587,7 +594,7 @@ export async function sendCommandToAgent(
   if (!agent.executor) {
     insertMessageInConversation(
       conversation,
-      createMessage(SystemUser.userId, `Agent [${agentName}] has stopped`)
+      createMessage(SystemUser.user_id, `Agent [${agentName}] has stopped`)
     );
   }
 }

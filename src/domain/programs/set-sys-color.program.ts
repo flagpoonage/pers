@@ -1,4 +1,5 @@
-import { PersController, setSystemUserProperties } from '../controller';
+import { setSystemColor } from '../agents/display.agent';
+import { PersController } from '../controller';
 import { PersProgramGenerator } from '../program';
 import { isValidColor } from './program-utils';
 
@@ -7,20 +8,20 @@ export async function* setSysColor(
 ): PersProgramGenerator {
   let color = yield {
     message: 'Please choose a colour for the system user',
-    isValidYield: true,
+    is_valid_yield: true,
   };
 
   while (!isValidColor(color)) {
     color = yield {
       message: 'Colour is invalid, please choose another colour',
-      isValidYield: false,
+      is_valid_yield: false,
     };
   }
 
-  setSystemUserProperties(controller, { userColor: color });
+  setSystemColor(controller, color);
 
   return {
-    message: `System display colour is set to ${color}`,
-    isValidYield: true,
+    message: null,
+    is_valid_yield: true,
   };
 }

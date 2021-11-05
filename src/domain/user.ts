@@ -1,14 +1,8 @@
 export interface BaseUser {
-  userName: string;
-  userColor: string;
+  username: string;
+  user_color: string;
 }
 
-export type OtherUser = BaseUser & {
-  userId: string;
+export type User = BaseUser & {
+  user_id: string;
 };
-
-export type SelfUser = OtherUser & {
-  authenticated: boolean;
-};
-
-export type User = SelfUser | OtherUser;

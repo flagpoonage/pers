@@ -10,7 +10,7 @@ import {
   insertMessageInGroup,
   PersMessageGroup,
 } from './message-group';
-import { OtherUser } from './user';
+import { User } from './user';
 
 type PersConversationChangeListener = (conversation: PersConversation) => void;
 
@@ -19,7 +19,7 @@ export type ConversationType = 'command' | 'standard';
 export interface PersConversation {
   id: string;
   type: ConversationType;
-  users: OtherUser[];
+  users: User[];
   maskedInput: boolean;
   messageGroups: PersMessageGroup[];
   emitter: Emitter<PersConversation>;
@@ -31,7 +31,7 @@ const LaterThanAll = Symbol('LaterThanAll');
 const MissingGroup = Symbol('MissingGroup');
 const EarlierThanAll = Symbol('EarlierThanAll');
 
-export function createConversation(users: OtherUser[]): PersConversation {
+export function createConversation(users: User[]): PersConversation {
   return {
     id: uuid(),
     users: users,
@@ -87,8 +87,8 @@ export function fillConversation(
 
   conversation.messageGroups = messagesCopy.reduce(
     (acc, val) => {
-      if (!acc.currentGroup || acc.currentGroup.userId !== val.userId) {
-        acc.currentGroup = createMessageGroup(val.userId, [val]);
+      if (!acc.currentGroup || acc.currentGroup.user_id !== val.user_id) {
+        acc.currentGroup = createMessageGroup(val.user_id, [val]);
         acc.groups.push(acc.currentGroup);
         return acc;
       }
@@ -128,7 +128,7 @@ export function getConversationsLatestMessageTime(
 export function getConversationsLatestMessageUser(
   conversation: PersConversation
 ): string {
-  return getConversationsLatestMessageGroup(conversation).userId;
+  return getConversationsLatestMessageGroup(conversation).user_id;
 }
 
 export function getConversationsLatestMessageGroup(
@@ -154,7 +154,7 @@ export function getConversationsEarliestMessageTime(
 export function getConversationsEarliestMessageUser(
   conversation: PersConversation
 ): string {
-  return getConversationsEarliestMessageGroup(conversation).userId;
+  return getConversationsEarliestMessageGroup(conversation).user_id;
 }
 
 export function conversationHasMessages(
@@ -216,7 +216,7 @@ export function insertMessageInConversation(
   if (!conversationHasMessages(conversation)) {
     addLatestMessageGroupToConversation(
       conversation,
-      createMessageGroup(message.userId, [message])
+      createMessageGroup(message.user_id, [message])
     );
   } else {
     const result = getConversationMessageGroupAtTime(
@@ -244,7 +244,7 @@ export function insertMessageInConversation(
         if (typeof missingGroup === 'number') {
           addMessageGroupToConversationAtIndex(
             conversation,
-            createMessageGroup(message.userId, [message]),
+            createMessageGroup(message.user_id, [message]),
             missingGroup
           );
         } else {
@@ -264,10 +264,10 @@ export function insertLatestMessageInConversation(
 ): PersConversation {
   const latestGroup = getConversationsLatestMessageGroup(conversation);
 
-  if (message.userId !== latestGroup.userId) {
+  if (message.user_id !== latestGroup.user_id) {
     return addLatestMessageGroupToConversation(
       conversation,
-      createMessageGroup(message.userId, [message])
+      createMessageGroup(message.user_id, [message])
     );
   }
 
@@ -281,10 +281,10 @@ export function insertEarliestMessageInConversation(
 ): PersConversation {
   const earliestGroup = getConversationsEarliestMessageGroup(conversation);
 
-  if (earliestGroup.userId !== message.userId) {
+  if (earliestGroup.user_id !== message.user_id) {
     return addEarliestMessageGroupToConversation(
       conversation,
-      createMessageGroup(message.userId, [message])
+      createMessageGroup(message.user_id, [message])
     );
   }
 
@@ -300,11 +300,11 @@ export function findMissingGroupInConversation(
   const laterGroup = conversation.messageGroups[groupRangeHint[0]];
   const earlierGroup = conversation.messageGroups[groupRangeHint[1]];
 
-  if (laterGroup.userId === message.userId) {
+  if (laterGroup.user_id === message.user_id) {
     return laterGroup;
   }
 
-  if (earlierGroup.userId === message.userId) {
+  if (earlierGroup.user_id === message.user_id) {
     return earlierGroup;
   }
 
@@ -319,17 +319,17 @@ export function insertMissingGroupMessageInConversation(
   const laterGroup = conversation.messageGroups[between[0]];
   const earlierGroup = conversation.messageGroups[between[1]];
 
-  if (laterGroup.userId === message.userId) {
+  if (laterGroup.user_id === message.user_id) {
     insertMessageInGroup(laterGroup, message);
     return conversation;
   }
 
-  if (earlierGroup.userId === message.userId) {
+  if (earlierGroup.user_id === message.user_id) {
     insertMessageInGroup(earlierGroup, message);
     return conversation;
   }
 
-  const missingGroup = createMessageGroup(message.userId, [message]);
+  const missingGroup = createMessageGroup(message.user_id, [message]);
 
   conversation.messageGroups.splice(between[1], 0, missingGroup);
   return conversation;
