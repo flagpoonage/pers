@@ -75,7 +75,7 @@ export function Content() {
           margin-left: calc(var(--size) - 1px);
         }`}
       </style>
-      <div className="bg-clr-dark-d1 w-16 abs h"></div>
+      <div className="bg-clr-dark-d2 w-16 abs h"></div>
       <div
         ref={containerRef}
         className={containerClass}
@@ -103,7 +103,7 @@ export function Content() {
                 </div>
                 {group.messages.map((message) => (
                   <div key={message.id} className="flex row">
-                    <div className="no-shrink no-grow w-14 clr-white-d5 ellipsis">
+                    <div className="no-shrink no-grow w-14 clr-dark-l5 ellipsis">
                       {formatMessageTime(message)}
                     </div>
                     <div

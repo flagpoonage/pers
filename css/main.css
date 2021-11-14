@@ -4,7 +4,7 @@ body {
   height: 100%;
   font-size: 18px;
   font-family: 'Azeret Mono', monospace;
-  background-color: var(--clr-dark);
+  background-color: var(--clr-dark-d1);
   color: white;
 }
 

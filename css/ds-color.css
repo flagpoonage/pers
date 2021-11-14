@@ -11,6 +11,17 @@
 .bg-clr-dark-d3 {
   background-color: var(--clr-dark-d3);
 }
+.bg-clr-dark-d4 {
+  background-color: var(--clr-dark-d4);
+}
+
+.clr-dark {
+  color: var(--clr-dark);
+}
+
+.clr-dark-l5 {
+  color: var(--clr-dark-l5);
+}
 
 .clr-white {
   color: var(--clr-white);

@@ -2,10 +2,17 @@ import {
   connect,
   getRemoteServerAgentState,
   RemoteServerAgentName,
+  setProfile,
+  UserFriend,
 } from '../agents/remote-server.agent';
 import { PersController } from '../controller';
 import { PersProgramGenerator } from '../program';
-import { getJsonErrorMessage, JsonError, postJsonHttp } from './program-utils';
+import {
+  getJsonErrorMessage,
+  getJsonHttp,
+  JsonError,
+  postJsonHttp,
+} from './program-utils';
 
 interface ExpectedLoginResult {
   type: 'success';
@@ -13,6 +20,17 @@ interface ExpectedLoginResult {
     user_id: string;
     access_token: string;
     refresh_token: string;
+  };
+}
+
+interface ExpectedProfileResult {
+  type: 'success';
+  data: {
+    id: string;
+    created_at: number;
+    username: string;
+    user_id: string;
+    friends: UserFriend[];
   };
 }
 
@@ -66,7 +84,13 @@ export async function* login(controller: PersController): PersProgramGenerator {
       }
     );
 
-    connect(controller, result.data);
+    const profile = await getJsonHttp<ExpectedProfileResult>(
+      `${agent_state.host_settings.api}/profile`,
+      result.data.access_token
+    );
+
+    await connect(controller, result.data);
+    await setProfile(controller, profile.data);
 
     return {
       message:

@@ -29,6 +29,7 @@ import { epoch } from './programs/epoch.program';
 import { prettyJson } from './programs/pretty-json.program';
 import { dateFmt } from './programs/date-fmt.program';
 import { clear } from './programs/clear.program';
+import { chat } from './programs/chat.program';
 import { intro } from './programs/intro.program';
 import { register } from './programs/register.program';
 import { setServer } from './programs/set-svr.program';
@@ -37,6 +38,7 @@ import { login } from './programs/login.program';
 import { PersAgentController } from './agent';
 import { createDisplayAgentController } from './agents/display.agent';
 import { createUsersAgentController } from './agents/users.agent';
+import { addFriend } from './programs/add-friend.program';
 
 export interface PersController {
   conversations: Map<string, PersConversation>;
@@ -141,6 +143,35 @@ export function createController(): PersController {
   };
 }
 
+export function addConversation(
+  controller: PersController,
+  conversation: PersConversation
+) {
+  if (controller.conversations.get(conversation.id)) {
+    return;
+  }
+
+  const conversations = new Map(controller.conversations);
+
+  conversations.set(conversation.id, conversation);
+
+  controller.conversations = conversations;
+
+  triggerChange(controller, 'add_conversation');
+}
+
+export function switchConversation(
+  controller: PersController,
+  conversation: PersConversation | string
+) {
+  const conversation_id =
+    typeof conversation === 'string' ? conversation : conversation.id;
+
+  controller.currentConversation = conversation_id;
+
+  triggerChange(controller, 'change_conversation');
+}
+
 export function createDefaultAgents(): Map<string, PersAgentController> {
   const remoteServerAgent = createRemoteServerAgentController();
   const displayAgent = createDisplayAgentController();
@@ -161,6 +192,8 @@ export function createDefaultPrograms() {
     'pretty-json': prettyJson,
     'set-svr': setServer,
     'date-fmt': dateFmt,
+    'add-friend': addFriend,
+    chat,
     clear,
     register,
     login,
@@ -242,6 +275,18 @@ export function getAgentState(controller: PersController, agent_name: string) {
   return agent.state;
 }
 
+export async function sendAgentMessageToController(
+  controller: PersController,
+  message: string,
+  agent_name: string
+) {
+  return sendMessageToController(
+    controller,
+    `[${agent_name}] - ${message}`,
+    SystemUser.user_id
+  );
+}
+
 export async function sendMessageToController(
   controller: PersController,
   message: string,
@@ -314,7 +359,7 @@ export async function continueProgramExecution(
 ) {
   const { done, value } = await currentProgram.next(command);
 
-  if (value.message) {
+  if (value?.message) {
     insertMessageInConversation(
       conversation,
       createMessage(SystemUser.user_id, value.message)
@@ -409,7 +454,7 @@ export async function sendCommandToController(
       !nextArgument ||
       value.next_entry_options?.mask
     ) {
-      if (value.message) {
+      if (value?.message) {
         insertMessageInConversation(
           conversation,
           createMessage(SystemUser.user_id, value.message)
@@ -473,7 +518,18 @@ export async function sendCommandToAgent(
     );
   }
 
-  const [agentCommand, ...agentRest] = commandRest;
+  const [agentCommand, argumentFlag, ...agentRest] = commandRest;
+
+  // If the --json flag is parsed, the next argument will come in as a whole, regardless
+  // of spaces.
+  const commandArguments =
+    argumentFlag === '--json'
+      ? [agentRest.join(' ')]
+      : parseArguments(
+          [argumentFlag, ...agentRest]
+            .filter((a) => typeof a === 'string')
+            .join(' ')
+        );
 
   if (agentCommand === 'start') {
     if (agent.executor) {
@@ -493,7 +549,7 @@ export async function sendCommandToAgent(
       agent.executor = agent.init(controller);
       const agent_response = await agent.executor.next([
         'start',
-        ...parseArguments(agentRest.join(' ')),
+        ...commandArguments,
       ]);
 
       if (agent_response.value.message) {
@@ -537,7 +593,7 @@ export async function sendCommandToAgent(
 
       const agent_response = await agent.executor.next([
         'stop',
-        ...parseArguments(agentRest.join(' ')),
+        ...commandArguments,
       ]);
 
       if (agent_response.value.message) {
@@ -560,7 +616,7 @@ export async function sendCommandToAgent(
   } else if (agent.executor) {
     const agent_response = await agent.executor.next([
       agentCommand,
-      ...parseArguments(agentRest.join(' ')),
+      ...commandArguments,
     ]);
 
     if (agent_response.value.message) {

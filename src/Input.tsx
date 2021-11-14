@@ -1,4 +1,4 @@
-import React, { useCallback, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   useCommandEntryOptions,
   useController,
@@ -74,10 +74,18 @@ export function Input() {
     text.indexOf('\\c ') === 0 ||
     !!controller.commandExecution;
 
+  useEffect(() => {
+    if (!inputRef.current) {
+      return;
+    }
+
+    inputRef.current.focus();
+  }, []);
+
   return (
     <div className="w bg-clr-dark-d2 row flex no-grow no-shrink">
       <div
-        className="lh bg-clr-dark-d5 pad w-16 pad-r no-grow no-shrink ellipsis"
+        className="lh bg-clr-dark-d4 pad w-16 pad-r no-grow no-shrink ellipsis"
         style={{ color: is_command ? cmd_color : my_color }}
       >
         {is_command ? entryOptions.label ?? 'Command' : self.username}
@@ -86,7 +94,7 @@ export function Input() {
         style={is_command ? { color: cmd_color } : {}}
         ref={inputRef}
         type={entryOptions.mask ? 'password' : 'text'}
-        className="ff w lh pad bg-clr-dark-d1 fsz font clr-white no-border no-outline"
+        className="ff w lh pad bg-clr-dark-d3 fsz font clr-white no-border no-outline"
         value={text}
         onChange={handleChange}
         onKeyDown={handleKeyDown}

@@ -1,10 +1,17 @@
+import { WithOptional } from '../../utils/types';
 import {
   PersAgentController,
   PersAgentGenerator,
   PersAgentLoopResult,
 } from '../agent';
-import { getAgent, PersController } from '../controller';
+import {
+  getAgent,
+  getCurrentConversationFromController,
+  PersController,
+  sendCommandToAgent,
+} from '../controller';
 import { EmitterHandler, addHandler, removeHandler } from '../emitter';
+import { getRandomColor } from '../programs/program-utils';
 import { LocalUser, SystemUser } from '../system';
 import { User } from '../user';
 
@@ -33,7 +40,7 @@ export function getUsersAgent(controller: PersController) {
   return controller.agents.get(UsersAgentName);
 }
 
-function addUser(
+function cmd_addUser(
   last_state: UsersAgentState,
   command_args: string[]
 ): LoopResult {
@@ -54,6 +61,13 @@ function addUser(
 
   if (!display_color) {
     return makeError('Missing user display color');
+  }
+
+  if (last_state.users.get(user_id)) {
+    return {
+      next_message: `User [${username}] exists in the users list`,
+      next_state: last_state,
+    };
   }
 
   const new_users = new Map(last_state.users);
@@ -81,7 +95,7 @@ async function agentLoop(
 ): Promise<LoopResult> {
   switch (incoming_command) {
     case 'add-user':
-      return addUser(last_state, command_args);
+      return cmd_addUser(last_state, command_args);
   }
 
   return {
@@ -139,6 +153,29 @@ export async function* usersAgent(
     // eslint-disable-next-line no-constant-condition
     true
   );
+}
+
+export async function addUser(
+  controller: PersController,
+  user: WithOptional<User, 'user_color'>
+) {
+  const display_color = user.user_color ?? getRandomColor('hex');
+
+  return sendCommandToAgent(
+    controller,
+    getCurrentConversationFromController(controller),
+    `${UsersAgentName} add-user ${user.user_id} ${user.username} ${display_color}`
+  );
+}
+
+export function getUser(controller: PersController, user_id: string) {
+  const state = getUsersAgentState(controller);
+
+  if (!state || !state.users) {
+    return;
+  }
+
+  return state.users.get(user_id);
 }
 
 export function createUsersAgentController(): PersAgentController<UsersAgentState> {
