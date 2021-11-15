@@ -2,15 +2,15 @@ import {
   PersAgentController,
   PersAgentGenerator,
   PersAgentLoopResult,
-} from '../agent';
+} from '../domain/agent';
 import {
   getAgent,
   getCurrentConversationFromController,
   maybeGetAgent,
   PersController,
   sendCommandToAgent,
-} from '../controller';
-import { addHandler, EmitterHandler, removeHandler } from '../emitter';
+} from '../domain/controller';
+import { addHandler, EmitterHandler, removeHandler } from '../domain/emitter';
 import { isValidColor } from '../programs/program-utils';
 
 export const DisplayAgentName = 'display';

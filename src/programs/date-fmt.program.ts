@@ -1,5 +1,5 @@
 import { format } from 'date-fns';
-import { PersProgramGenerator } from '../program';
+import { PersProgramGenerator } from '../domain/program';
 
 export async function* dateFmt(): PersProgramGenerator {
   const content = yield {

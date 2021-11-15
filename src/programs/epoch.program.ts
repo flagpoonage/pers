@@ -1,4 +1,4 @@
-import { ProgramOutput } from '../program';
+import { ProgramOutput } from '../domain/program';
 
 export async function epoch(): Promise<ProgramOutput> {
   return {

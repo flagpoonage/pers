@@ -1,9 +1,9 @@
 import {
   getCurrentConversationFromController,
   PersController,
-} from '../controller';
-import { clearConversation } from '../conversation';
-import { ProgramOutput } from '../program';
+} from '../domain/controller';
+import { clearConversation } from '../domain/conversation';
+import { ProgramOutput } from '../domain/program';
 
 export async function clear(
   controller: PersController

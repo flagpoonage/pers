@@ -1,19 +1,19 @@
-import { WithOptional } from '../../utils/types';
+import { WithOptional } from '../utils/types';
 import {
   PersAgentController,
   PersAgentGenerator,
   PersAgentLoopResult,
-} from '../agent';
+} from '../domain/agent';
 import {
   getAgent,
   getCurrentConversationFromController,
   PersController,
   sendCommandToAgent,
-} from '../controller';
-import { EmitterHandler, addHandler, removeHandler } from '../emitter';
+} from '../domain/controller';
+import { EmitterHandler, addHandler, removeHandler } from '../domain/emitter';
 import { getRandomColor } from '../programs/program-utils';
-import { LocalUser, SystemUser } from '../system';
-import { User } from '../user';
+import { LocalUser, SystemUser } from '../domain/system';
+import { User } from '../domain/user';
 
 export const UsersAgentName = 'users';
 

@@ -5,11 +5,11 @@ import {
 import {
   getCurrentConversationFromController,
   PersController,
-} from '../controller';
-import { insertMessageInConversation } from '../conversation';
-import { createMessage } from '../message';
-import { PersProgramGenerator } from '../program';
-import { SystemUser } from '../system';
+} from '../domain/controller';
+import { insertMessageInConversation } from '../domain/conversation';
+import { createMessage } from '../domain/message';
+import { PersProgramGenerator } from '../domain/program';
+import { SystemUser } from '../domain/system';
 import { getJsonErrorMessage, getJsonHttp, JsonError } from './program-utils';
 
 export interface InfoOutputDto {

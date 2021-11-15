@@ -6,7 +6,7 @@ import {
   useDisplayState,
   useUsersState,
 } from './ControllerContext';
-import { getCurrentUser } from './domain/agents/remote-server.agent';
+import { getCurrentUser } from './agents/remote-server.agent';
 import { SystemUser } from './domain/system';
 
 export function Content() {

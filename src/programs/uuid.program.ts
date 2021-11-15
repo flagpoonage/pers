@@ -1,4 +1,4 @@
-import { PersProgramGenerator } from '../program';
+import { PersProgramGenerator } from '../domain/program';
 import { v4 as generateUuid } from 'uuid';
 
 export async function* uuid(): PersProgramGenerator {

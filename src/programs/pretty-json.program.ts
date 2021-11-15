@@ -1,4 +1,4 @@
-import { PersProgramGenerator } from '../program';
+import { PersProgramGenerator } from '../domain/program';
 
 export async function* prettyJson(): PersProgramGenerator {
   const content = yield {

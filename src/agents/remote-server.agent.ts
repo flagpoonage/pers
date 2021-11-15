@@ -1,19 +1,19 @@
-import { maybeJSON } from '../../utils/maybe-json';
+import { maybeJSON } from '../utils/maybe-json';
 import {
   PersAgentController,
   PersAgentGenerator,
   PersAgentLoopResult,
-} from '../agent';
+} from '../domain/agent';
 import {
   getAgent,
   getCurrentConversationFromController,
   PersController,
   sendAgentMessageToController,
   sendCommandToAgent,
-} from '../controller';
-import { addHandler, EmitterHandler, removeHandler } from '../emitter';
-import { LocalUser } from '../system';
-import { User } from '../user';
+} from '../domain/controller';
+import { addHandler, EmitterHandler, removeHandler } from '../domain/emitter';
+import { LocalUser } from '../domain/system';
+import { User } from '../domain/user';
 import { getUsersAgentState } from './users.agent';
 
 export type UserFriend = Pick<User, 'username' | 'user_id'>;

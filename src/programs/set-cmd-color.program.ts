@@ -1,6 +1,6 @@
 import { setCommandColor } from '../agents/display.agent';
-import { PersController } from '../controller';
-import { PersProgramGenerator } from '../program';
+import { PersController } from '../domain/controller';
+import { PersProgramGenerator } from '../domain/program';
 import { isValidColor } from './program-utils';
 
 export async function* setCmdColor(

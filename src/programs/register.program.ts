@@ -1,45 +1,30 @@
 import {
-  connect,
   getRemoteServerAgentState,
   RemoteServerAgentName,
-  setProfile,
-  UserFriend,
 } from '../agents/remote-server.agent';
-import { PersController } from '../controller';
-import { PersProgramGenerator } from '../program';
-import {
-  getJsonErrorMessage,
-  getJsonHttp,
-  JsonError,
-  postJsonHttp,
-} from './program-utils';
+import { PersController } from '../domain/controller';
+import { PersProgramGenerator } from '../domain/program';
+import { getJsonErrorMessage, JsonError, postJsonHttp } from './program-utils';
 
-interface ExpectedLoginResult {
+interface ExpectedRegistrationResult {
   type: 'success';
   data: {
+    message: string;
     user_id: string;
-    access_token: string;
-    refresh_token: string;
-  };
-}
-
-interface ExpectedProfileResult {
-  type: 'success';
-  data: {
-    id: string;
-    created_at: number;
     username: string;
-    user_id: string;
-    friends: UserFriend[];
+    created_at: number;
+    updated_at: number;
   };
 }
 
-interface LoginInput {
+interface RegistrationInput {
   username: string;
   password: string;
 }
 
-export async function* login(controller: PersController): PersProgramGenerator {
+export async function* register(
+  controller: PersController
+): PersProgramGenerator {
   const agent_state = getRemoteServerAgentState(controller);
 
   if (!agent_state) {
@@ -52,13 +37,14 @@ export async function* login(controller: PersController): PersProgramGenerator {
   if (!agent_state.host_settings) {
     return {
       message:
-        'You must be connected to a server before you can login. Run the `set-svr` command to connect.',
+        'You must be connected to a server before you can register. Run the `set-svr` command to connect.',
       is_valid_yield: true,
     };
   }
 
   const username = yield {
-    message: 'Enter your username',
+    message:
+      'Enter a new username. Your username should consistent of uppercase and lowercase letters, numbers from 0 to 9, as well as _ and - characters.',
     is_valid_yield: true,
     next_entry_options: {
       mask: false,
@@ -67,7 +53,8 @@ export async function* login(controller: PersController): PersProgramGenerator {
   };
 
   const password = yield {
-    message: 'Enter your password',
+    message:
+      'Enter a new password. Your password must be at least 16 characters long.',
     is_valid_yield: true,
     next_entry_options: {
       mask: true,
@@ -76,25 +63,17 @@ export async function* login(controller: PersController): PersProgramGenerator {
   };
 
   try {
-    const result = await postJsonHttp<LoginInput, ExpectedLoginResult>(
-      `${agent_state.host_settings.api}/login`,
+    await postJsonHttp<RegistrationInput, ExpectedRegistrationResult>(
+      `${agent_state.host_settings.api}/register`,
       {
         username,
         password,
       }
     );
 
-    const profile = await getJsonHttp<ExpectedProfileResult>(
-      `${agent_state.host_settings.api}/profile`,
-      result.data.access_token
-    );
-
-    await connect(controller, result.data);
-    await setProfile(controller, profile.data);
-
     return {
       message:
-        'Login was successful. Please use the login command to log in to your account',
+        'Registration was successful. Please use the login command to log in to your account',
       is_valid_yield: true,
     };
   } catch (exception) {

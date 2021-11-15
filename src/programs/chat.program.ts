@@ -8,9 +8,9 @@ import {
   addConversation,
   PersController,
   switchConversation,
-} from '../controller';
-import { createConversation } from '../conversation';
-import { PersProgramGenerator } from '../program';
+} from '../domain/controller';
+import { PersProgramGenerator } from '../domain/program';
+import { createConversation } from '../domain/conversation';
 
 export async function* chat(controller: PersController): PersProgramGenerator {
   const agent_state = getRemoteServerAgentState(controller);

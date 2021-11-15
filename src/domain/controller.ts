@@ -21,24 +21,24 @@ import {
   PersProgram,
   PersProgramGenerator,
 } from './program';
-import { setColor } from './programs/set-color.program';
-import { setCmdColor } from './programs/set-cmd-color.program';
-import { setSysColor } from './programs/set-sys-color.program';
-import { uuid } from './programs/uuid.program';
-import { epoch } from './programs/epoch.program';
-import { prettyJson } from './programs/pretty-json.program';
-import { dateFmt } from './programs/date-fmt.program';
-import { clear } from './programs/clear.program';
-import { chat } from './programs/chat.program';
-import { intro } from './programs/intro.program';
-import { register } from './programs/register.program';
-import { setServer } from './programs/set-svr.program';
-import { createRemoteServerAgentController } from './agents/remote-server.agent';
-import { login } from './programs/login.program';
+import { setColor } from '../programs/set-color.program';
+import { setCmdColor } from '../programs/set-cmd-color.program';
+import { setSysColor } from '../programs/set-sys-color.program';
+import { uuid } from '../programs/uuid.program';
+import { epoch } from '../programs/epoch.program';
+import { prettyJson } from '../programs/pretty-json.program';
+import { dateFmt } from '../programs/date-fmt.program';
+import { clear } from '../programs/clear.program';
+import { chat } from '../programs/chat.program';
+import { intro } from '../programs/intro.program';
+import { register } from '../programs/register.program';
+import { setServer } from '../programs/set-svr.program';
+import { createRemoteServerAgentController } from '../agents/remote-server.agent';
+import { login } from '../programs/login.program';
 import { PersAgentController } from './agent';
-import { createDisplayAgentController } from './agents/display.agent';
-import { createUsersAgentController } from './agents/users.agent';
-import { addFriend } from './programs/add-friend.program';
+import { createDisplayAgentController } from '../agents/display.agent';
+import { createUsersAgentController } from '../agents/users.agent';
+import { addFriend } from '../programs/add-friend.program';
 
 export interface PersController {
   conversations: Map<string, PersConversation>;

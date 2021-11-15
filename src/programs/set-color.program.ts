@@ -1,13 +1,13 @@
-import { setSystemColor } from '../agents/display.agent';
-import { PersController } from '../controller';
-import { PersProgramGenerator } from '../program';
+import { setMyDisplayColor } from '../agents/display.agent';
+import { PersController } from '../domain/controller';
+import { PersProgramGenerator } from '../domain/program';
 import { isValidColor } from './program-utils';
 
-export async function* setSysColor(
+export async function* setColor(
   controller: PersController
 ): PersProgramGenerator {
   let color = yield {
-    message: 'Please choose a colour for the system user',
+    message: 'Please choose a colour for the your own user messages',
     is_valid_yield: true,
   };
 
@@ -18,7 +18,7 @@ export async function* setSysColor(
     };
   }
 
-  setSystemColor(controller, color);
+  setMyDisplayColor(controller, color);
 
   return {
     message: null,

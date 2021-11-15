@@ -1,5 +1,5 @@
-import { ProgramOutput } from '../program';
-import { getSystemIntroductionText } from '../system';
+import { ProgramOutput } from '../domain/program';
+import { getSystemIntroductionText } from '../domain/system';
 
 export async function intro(): Promise<ProgramOutput> {
   return {

@@ -4,8 +4,8 @@ import {
   addFriend as addFriendCmd,
   UserFriend,
 } from '../agents/remote-server.agent';
-import { PersController } from '../controller';
-import { PersProgramGenerator } from '../program';
+import { PersController } from '../domain/controller';
+import { PersProgramGenerator } from '../domain/program';
 import { getJsonErrorMessage, JsonError, postJsonHttp } from './program-utils';
 
 interface ExpectedAddFriendResult {

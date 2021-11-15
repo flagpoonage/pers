@@ -11,7 +11,7 @@ import {
   getDefaultDisplayAgentState,
   unwatchDisplayAgentState,
   watchDisplayAgentState,
-} from './domain/agents/display.agent';
+} from './agents/display.agent';
 import {
   getCurrentUser,
   getDefaultRemoteServerAgentState,
@@ -19,14 +19,14 @@ import {
   RemoteServerAgentState,
   unwatchRemoteServerAgentState,
   watchRemoteServerAgentState,
-} from './domain/agents/remote-server.agent';
+} from './agents/remote-server.agent';
 import {
   getDefaultUsersAgentState,
   unwatchUsersAgentState,
   UsersAgentName,
   UsersAgentState,
   watchUsersAgentState,
-} from './domain/agents/users.agent';
+} from './agents/users.agent';
 import {
   PersController,
   createController,
